@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.requerimiento-select {
+    width: auto; /* Ajusta el ancho del select */
+    display: inline-block; /* Alinea el select con el checkbox */
+    margin-left: 10px; /* Espacio entre el checkbox y el select */
+}
