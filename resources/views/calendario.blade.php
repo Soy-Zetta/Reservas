@@ -36,7 +36,7 @@
 </div>
 
 
-<!-- Modal del Formulario (copiado desde index.blade.php con ajustes) -->
+<!-- Modal del Formulario -->
 <div class="modal fade" id="modalReserva" tabindex="-1" aria-labelledby="modalReservaLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -47,7 +47,7 @@
 
 
             <div class="modal-body">
-    <form id="formReserva" action="{{ route('reservas.store') }}" method="POST">
+    <form id="formReserva" action="{{ route('reservas.store') }}" method="POST" novalidate>
         @csrf <div id="form-nueva-reserva">
             <h5>Nueva Reserva</h5>
 
@@ -182,7 +182,7 @@
                 </div>
             </div>
         @endforeach
-        {{-- Checkbox para "Otro" en Servicios Generales --}}
+        <!-- Checkbox para "Otro" en Servicios Generales -->
         <div class="form-check">
             <input class="form-check-input requerimiento-checkbox" type="checkbox"
                 name="servicios_generales[]" value="{{ $otroItemServiciosGenerales }}"
@@ -247,6 +247,10 @@
         </div>
     </div>
 
+
+
+
+
     <div class="text-end mt-4">
         <button type="button" class="btn btn-secondary" id="btn-anterior">Anterior</button>
         <button type="submit" class="btn btn-success">Reservar</button>
@@ -254,384 +258,375 @@
 </div>
 </div>
 </div>
-
     </form>
 </div>
     
+
+<div class="modal fade" id="infoReservaModal" tabindex="-1" aria-labelledby="infoReservaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg"> {{-- Puedes usar modal-lg para más espacio --}}
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="infoReservaModalLabel">Detalles de la Reserva</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {{-- Aquí es donde el JavaScript insertará la información --}}
+                <div id="reservaInfoContent">
+                    <p>Cargando detalles...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                {{-- Podrías añadir botones aquí si fueran necesarios, como "Editar Reserva" o "Eliminar" --}}
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
         </div>
 
 
 </div>
-
+@stop
    
 
 
-@section('js')
-    {{-- No necesitas cargar jQuery ni Bootstrap.bundle.min.js, AdminLTE ya los incluye. --}}
-    {{-- Popper.js es usualmente una dependencia de Bootstrap, por lo que también debería estar cubierto. --}}
 
+@section('js')
+    
+    
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-    <script src="https://unpkg.com/tippy.js@6"></script> {{-- Si realmente lo necesitas y AdminLTE no lo incluye --}}
+    <script src="https://unpkg.com/tippy.js@6"></script> {{-- Mantenlo si usas Tippy.js para algo más, si no, puedes quitarlo si solo era para el tooltip anterior --}}
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('calendar');
             var calendar = new FullCalendar.Calendar(calendarEl, {
-                locale: 'es', // ¡Importante para la internacionalización que tenías!
+                locale: 'es',
                 initialView: 'dayGridMonth',
-                height: 'auto', // Estos ajustes de visualización son buenos
+                height: 'auto',
                 contentHeight: 'auto',
                 expandRows: true,
-                aspectRatio: 1.8, // Puedes jugar con este valor para el tamaño
+                aspectRatio: 1.8,
                 headerToolbar: {
                     left: 'prev,next today',
-                    center: 'title', // 'title' es más común que 'auto' aquí
+                    center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
                 events: '{{ route("reservas.events") }}', 
             
-dateClick: function(info) {
-    console.log('1. Evento dateClick SE HA DISPARADO CORRECTAMENTE.');
-    console.log('2. Fecha seleccionada por el usuario:', info.dateStr);
+                dateClick: function(info) {
+                    console.log('1. Evento dateClick SE HA DISPARADO CORRECTAMENTE.');
+                    console.log('2. Fecha seleccionada por el usuario:', info.dateStr);
 
-    // ----- REINTRODUCIMOS LA LÓGICA DEL MODAL CON MANEJO DE ERRORES -----
-    try {
-        const clickedDate = info.dateStr;
-        var fechaInput = document.getElementById('fecha'); // ID del campo fecha en tu modal
+                    try {
+                        const clickedDate = info.dateStr;
+                        var fechaInput = document.getElementById('fecha');
 
-        if (fechaInput) {
-            fechaInput.value = clickedDate; // Asignamos la fecha al input del modal
-            console.log('3. Fecha asignada al input del modal (ID "fecha").');
-        } else {
-            console.error('Error: Input con ID "fecha" no encontrado en el modal.');
-            alert('Error: No se encontró el campo de fecha en el formulario del modal.');
-            return; // Detenemos si no podemos asignar la fecha
-        }
+                        if (fechaInput) {
+                            fechaInput.value = clickedDate;
+                            console.log('3. Fecha asignada al input del modal (ID "fecha").');
+                        } else {
+                            console.error('Error: Input con ID "fecha" no encontrado en el modal.');
+                            alert('Error: No se encontró el campo de fecha en el formulario del modal.');
+                            return; 
+                        }
 
-        var modalReservaElement = document.getElementById('modalReserva'); // ID de tu modal
+                        var modalReservaElement = document.getElementById('modalReserva'); 
 
-        if (modalReservaElement) {
-            console.log('4. Elemento del modal (ID "modalReserva") encontrado en el HTML.');
-            // Asegúrate de que la librería Bootstrap 5 esté disponible como 'bootstrap'
-            if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal !== 'undefined') {
-                var modalReserva = new bootstrap.Modal(modalReservaElement);
-                modalReserva.show();
-                console.log('5. Intento de mostrar el modal (modalReserva.show()) finalizado.');
-            } else {
-                console.error('Error: El objeto bootstrap o bootstrap.Modal no está definido. Asegúrate de que Bootstrap 5 JS esté cargado.');
-                alert('Error: La librería de Bootstrap para modales no está disponible.');
-                return;
-            }
-        } else {
-            console.error('Error: Elemento del modal con ID "modalReserva" no encontrado en el HTML.');
-            alert('Error: No se encontró el elemento HTML del formulario modal. Revisa los IDs.');
-            return; // Detenemos si no encontramos el modal
-        }
+                        if (modalReservaElement) {
+                            console.log('4. Elemento del modal (ID "modalReserva") encontrado en el HTML.');
+                            if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal !== 'undefined') {
+                                var modalReserva = new bootstrap.Modal(modalReservaElement);
+                                modalReserva.show();
+                                console.log('5. Intento de mostrar el modal (modalReserva.show()) finalizado.');
+                            } else {
+                                console.error('Error: El objeto bootstrap o bootstrap.Modal no está definido.');
+                                alert('Error: La librería de Bootstrap para modales no está disponible.');
+                                return;
+                            }
+                        } else {
+                            console.error('Error: Elemento del modal con ID "modalReserva" no encontrado en el HTML.');
+                            alert('Error: No se encontró el elemento HTML del formulario modal. Revisa los IDs.');
+                            return; 
+                        }
 
-        // Mantenemos comentada la limpieza de los otros campos y la lógica de secciones del formulario por ahora,
-        
-        
-        document.getElementById('hora_inicio').value = '';
-        document.getElementById('hora_fin').value = '';
-        document.getElementById('nombre_actividad').value = '';
-        document.getElementById('programa_evento').value = '';
-        $('#espacio_id').val('').trigger('change');
-        $('#otro_espacio').addClass('d-none').prop('disabled', true).removeAttr('required').val('');
-        $('.requerimiento-checkbox').prop('checked', false);
-        $('.form-check input[type="number"]').addClass('d-none');
-        $('[id^="otro-"][id$="-select"]').addClass('d-none');
-        $('[name^="otro_"]').val('');
-        $('#form-nueva-reserva').removeClass('d-none');
-        $('#form-requerimientos').addClass('d-none');
-        
+                        // Limpieza de campos del formulario (estas son las líneas que habías descomentado)
+                        document.getElementById('hora_inicio').value = '';
+                        document.getElementById('hora_fin').value = '';
+                        document.getElementById('nombre_actividad').value = '';
+                        document.getElementById('programa_evento').value = '';
+                        $('#espacio_id').val('').trigger('change'); // Resetea el select de espacio
+                        $('#otro_espacio').addClass('d-none').prop('disabled', true).removeAttr('required').val('');
+                        
+                        $('.requerimiento-checkbox').prop('checked', false); // Desmarcar todos los checkboxes de requerimientos
+                        // Ocultar inputs de cantidad y divs de "otro" específico que podrían estar visibles
+                        $('.form-check input[type="number"]').addClass('d-none'); 
+                        $('[id^="otro-"][id$="-select"]').addClass('d-none').find('input[type="text"]').val(''); // Oculta y limpia el texto de "otro"
 
-    } catch (e) {
-        console.error('Error general dentro de la función dateClick al intentar mostrar el modal:', e);
-        alert('Ocurrió un error al procesar el clic en la fecha para mostrar el formulario: ' + e.message);
-    }
-},
-                eventClick: function(info) {
-                    // ... (tu lógica de eventClick) ...
-                },
-                eventMouseEnter: function(info) {
-                    // ... (tu lógica de eventMouseEnter para tooltips) ...
-                },
-                eventMouseLeave: function(info) {
-                    // ... (tu lógica de eventMouseLeave para tooltips) ...
-                }
-            });
-            calendar.render();
-
-            // Tu lógica jQuery para el formulario modal (debería funcionar bien aquí)
-            $(document).ready(function() {
-                // ... (tu código de $('#espacio_id').on('change', ...), etc.) ...
-            });
-
-            // Tu lógica para el envío del formulario con AJAX
-            document.getElementById('formReserva').addEventListener('submit', function(e) {
-                // ... (tu código de fetch para enviar el formulario) ...
-            });
-        });
-    </script>
-@stop
-
-
-
-
-
-
-
-<!-- Dependencias -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://unpkg.com/@popperjs/core@2"></script>
-<script src="https://unpkg.com/tippy.js@6"></script>    
-
-<!-- Scripts Personalizados -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var calendarEl = document.getElementById('calendar'); // Asegúrate de que el ID sea 'calendar'
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-        // ... otras opciones de tu calendario ...
-        events: '/reservas/events',
-        dateClick: function(info) {
-            // Formatear la fecha para el input del formulario (YYYY-MM-DD)
-            const clickedDate = info.dateStr;
-            document.getElementById('fecha').value = clickedDate;
-
-            // Limpiar los campos de hora si es necesario
-            document.getElementById('hora_inicio').value = '';
-            document.getElementById('hora_fin').value = '';
-            document.getElementById('nombre_actividad').value = '';
-            document.getElementById('programa_evento').value = '';
-            $('#espacio_id').val('').trigger('change'); // Resetear el select de espacio
-            $('#otro_espacio').addClass('d-none').prop('disabled', true).removeAttr('required').val('');
-
-            // Desmarcar y ocultar campos de requerimientos
-            $('.requerimiento-checkbox').prop('checked', false);
-            $('.form-check input[type="number"]').addClass('d-none');
-
-            // Mostrar la primera sección del formulario
-            $('#form-nueva-reserva').removeClass('d-none');
-            $('#form-requerimientos').addClass('d-none');
-
-            // Mostrar el modal de creación (asegúrate de que el ID de tu modal de creación sea 'modalReserva')
-            var modalReserva = new bootstrap.Modal(document.getElementById('modalReserva'));
-            modalReserva.show();
-        },
-
-        eventClick: function(info) {
-            var reservaId = info.event.id;
-
-            fetch('/reservas/' + reservaId) // Nueva ruta para obtener solo los detalles para mostrar
-                .then(response => response.json())
-                .then(data => {
-                    // Formatear las horas para mostrar
-                    const formattedStartTime = data.hora_inicio.substring(0, 5); // Obtener solo HH:MM
-                    const formattedEndTime = data.hora_fin.substring(0, 5); // Obtener solo HH:MM
-
-                    // Crear el contenido HTML para mostrar en el modal
-                    let content = `
-                        <p><strong>Actividad:</strong> ${data.nombre_actividad}</p>
-                        <p><strong>Fecha:</strong> ${data.fecha}</p>
-                        <p><strong>Hora Inicio:</strong> ${formattedStartTime}</p>
-                        <p><strong>Hora Fin:</strong> ${formattedEndTime}</p>
-                        <p><strong>Espacio:</strong> ${data.espacio ? data.espacio.nombre : (data.espacio_nombre ? data.espacio_nombre : 'No disponible')}</p>
-                        <p><strong>Número de Personas:</strong> ${data.num_personas}</p>
-                    `;
-
-                    // Mostrar los requerimientos
-                    if (data.requerimientos && data.requerimientos.length > 0) {
-                        content += '<p><strong>Requerimientos:</strong></p><ul>';
-                        data.requerimientos.forEach(req => {
-                            content += `<li>${req.descripcion} ${req.cantidad ? '(Cantidad: ' + req.cantidad + ')' : ''}</li>`;
-                        });
-                        content += '</ul>';
-                    } else {
-                        content += '<p><strong>Requerimientos:</strong> No se solicitaron requerimientos.</p>';
+                        $('#form-nueva-reserva').removeClass('d-none'); // Asegura que la primera parte del form sea visible
+                        $('#form-requerimientos').addClass('d-none');  // Asegura que la segunda parte del form esté oculta
+                        
+                    } catch (e) {
+                        console.error('Error general dentro de la función dateClick:', e);
+                        alert('Ocurrió un error al procesar el clic en la fecha: ' + e.message);
                     }
+                },
 
-                    // Insertar el contenido en el modal
-                    document.getElementById('reservaInfoContent').innerHTML = content;
+              // En @section('js'), dentro de la inicialización de FullCalendar:
+// ... (tus otras opciones como locale, initialView, events, dateClick, eventMouseEnter, eventMouseLeave) ...
 
+eventClick: function(info) {
+    console.log('eventClick disparado para el evento ID:', info.event.id);
+    var reservaId = info.event.id;
+    var spinner = '<p>Cargando detalles...</p>'; // Mensaje de carga
+    var reservaInfoContentDiv = document.getElementById('reservaInfoContent');
 
+    if (!reservaInfoContentDiv) {
+        console.error('Error: Elemento con ID "reservaInfoContent" no encontrado en el HTML del modal de detalles.');
+        alert('Error de configuración: falta el contenedor para mostrar detalles de la reserva.');
+        return;
+    }
 
-                    // Mostrar el modal de información
-                    var infoModal = new bootstrap.Modal(document.getElementById('infoReservaModal'));
-                    infoModal.show();
-                })
-                .catch(error => {
-                    console.error('Error al cargar los detalles de la reserva:', error);
-                    alert('Error al cargar los detalles de la reserva.');
+    reservaInfoContentDiv.innerHTML = spinner; // Mostrar "Cargando..."
+
+    var infoModalElement = document.getElementById('infoReservaModal');
+    if (!infoModalElement) {
+        console.error('Error: Elemento del modal con ID "infoReservaModal" no encontrado.');
+        alert('Error de configuración: falta el modal para mostrar detalles.');
+        return;
+    }
+    var infoModal = new bootstrap.Modal(infoModalElement);
+    infoModal.show(); // Muestra el modal de detalles inmediatamente con el mensaje "Cargando..."
+
+    fetch('/reservas/' + reservaId) // La URL para obtener los detalles de una reserva
+        .then(response => {
+            if (!response.ok) {
+                // Si la respuesta no es OK, intentamos obtener el mensaje de error
+                return response.text().then(text => {
+                    throw new Error(`Error del servidor: ${response.status} ${response.statusText}. Detalles: ${text}`);
                 });
-        },
-        eventMouseEnter: function(info) {
-            const reserva = info.event.extendedProps;
+            }
+            return response.json(); // Esperamos una respuesta JSON
+        })
+        .then(data => {
+            console.log('Detalles de la reserva recibidos:', data);
+            
+            // Formatear las horas
+            const formattedStartTime = data.hora_inicio ? data.hora_inicio.substring(0, 5) : 'No definida';
+            const formattedEndTime = data.hora_fin ? data.hora_fin.substring(0, 5) : 'No definida';
 
-            // Formatear hora de inicio
-            const startTime = new Date(info.event.start);
-            const formattedStartTime = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            // Formatear hora de fin
-            const endTime = new Date(info.event.end);
-            const formattedEndTime = endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            let contenidoTooltip = `
-                <div class="fc-event-tooltip">
-                    <b>Usuario:</b> ${reserva.usuario ? reserva.usuario : 'No disponible'}<br>
-                    <b>Actividad:</b> ${info.event.title}<br>
-                    <b>Hora Inicio:</b> ${formattedStartTime}<br>
-                    <b>Hora Fin:</b> ${formattedEndTime}<br>
-                    <b>Espacio:</b> ${reserva.espacio ? reserva.espacio : (reserva.espacio_nombre ? reserva.espacio_nombre : 'No disponible')}<br>
-                    <b>Número de Personas:</b> ${reserva.num_personas}<br>
-                    <b>Requerimientos:</b><br>
+            let contenidoHtml = `
+                <p><strong>Actividad:</strong> ${data.nombre_actividad || 'No disponible'}</p>
+                <p><strong>Fecha:</strong> ${data.fecha || 'No disponible'}</p>
+                <p><strong>Hora Inicio:</strong> ${formattedStartTime}</p>
+                <p><strong>Hora Fin:</strong> ${formattedEndTime}</p>
+                <p><strong>Espacio:</strong> ${data.espacio ? data.espacio.nombre : (data.otro_espacio || 'No especificado')}</p>
+                <p><strong>Número de Personas:</strong> ${data.num_personas !== null && data.num_personas !== undefined ? data.num_personas : 'No especificado'}</p>
+                <p><strong>Programa del Evento:</strong></p>
+                <p>${data.programa_evento || 'No especificado'}</p>
             `;
 
-            // Mostrar requerimientos con cantidad
-            if (reserva.requerimientosArray && reserva.requerimientosArray.length > 0) {
-                reserva.requerimientosArray.forEach(req => {
-                    contenidoTooltip += `- ${req.descripcion} ${req.cantidad ? '(Cantidad: ' + req.cantidad + ')' : ''}<br>`;
+            if (data.requerimientos && data.requerimientos.length > 0) {
+                contenidoHtml += '<p><strong>Requerimientos:</strong></p><ul>';
+                data.requerimientos.forEach(req => {
+                    contenidoHtml += `<li>${req.descripcion ? req.descripcion : ''} ${req.cantidad ? '(Cantidad: ' + req.cantidad + ')' : ''}</li>`;
                 });
+                contenidoHtml += '</ul>';
             } else {
-                contenidoTooltip += 'No se solicitaron requerimientos.<br>';
+                contenidoHtml += '<p><strong>Requerimientos:</strong> No se solicitaron requerimientos.</p>';
             }
-            contenidoTooltip += `</div>`;
 
-            // Crear el tooltip element
-            let tooltipEl = document.createElement('div');
-            tooltipEl.innerHTML = contenidoTooltip;
-            document.body.appendChild(tooltipEl);
-
-            // Posicionar el tooltip cerca del cursor
-            const x = info.jsEvent.pageX;
-            const y = info.jsEvent.pageY;
-
-            tooltipEl.style.position = 'absolute';
-            tooltipEl.style.left = x + 10 + 'px'; // Ajusta la distancia del cursor si es necesario
-            tooltipEl.style.top = y + 10 + 'px';  // Ajusta la distancia del cursor si es necesario
-            tooltipEl.style.zIndex = '1000'; // Asegura que esté por encima de otros elementos
-
-            // Guarda una referencia al tooltip para poder eliminarlo en mouseleave
-            info.el.setAttribute('data-tooltip-id', tooltipEl);
-        },
-        eventMouseLeave: function(info) {
-            const tooltip = document.querySelector('.fc-event-tooltip');
-            if (tooltip) {
-                tooltip.remove();
+            if (data.usuario) { // Si la información del usuario está cargada
+                contenidoHtml += `<p><strong>Reservado por:</strong> ${data.usuario.name || 'No disponible'}</p>`;
             }
-            // También podemos intentar eliminar cualquier tooltip residual por si acaso
-            const allTooltips = document.querySelectorAll('.fc-event-tooltip');
-            allTooltips.forEach(tt => tt.remove());
-        }
-    });
-    calendar.render();
 
-    // Lógica jQuery del Formulario (se mantiene igual)
-    $(document).ready(function() {
-        // Mostrar campo "Otro espacio" en el formulario de creación
-        $('#espacio_id').on('change', function() {
-            if ($(this).val() === 'Otro') {
-                $('#otro_espacio').removeClass('d-none').prop('disabled', false).attr('required', true);
-            } else {
-                $('#otro_espacio').addClass('d-none').prop('disabled', true).removeAttr('required').val('');
-            }
+            reservaInfoContentDiv.innerHTML = contenidoHtml; // Inserta el contenido formateado
+        })
+        .catch(error => {
+            console.error('Error al cargar los detalles de la reserva (eventClick):', error);
+            reservaInfoContentDiv.innerHTML = `<p class="text-danger">Error al cargar los detalles: ${error.message}</p>`;
+            // No cerramos el modal aquí, para que el usuario vea el mensaje de error.
         });
+},
 
 
+                eventMouseEnter: function(info) {
+                    const props = info.event.extendedProps; 
 
-        // Navegación entre secciones del formulario de creación
-        $('#btn-siguiente').click(() => {
-            $('#form-nueva-reserva').addClass('d-none');
-            $('#form-requerimientos').removeClass('d-none');
-        });
+                    const startTime = new Date(info.event.start);
+                    const formattedStartTime = startTime.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-        $('#btn-anterior').click(() => {
-            $('#form-requerimientos').addClass('d-none');
-            $('#form-nueva-reserva').removeClass('d-none');
-        });
+                    let formattedEndTime = 'No definida';
+                    if (info.event.end) { 
+                        const endTime = new Date(info.event.end);
+                        formattedEndTime = endTime.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true });
+                    }
 
-        // Mostrar/ocultar elementos al marcar/desmarcar checkboxes en el formulario de creación
-        $(document).on('change', '.requerimiento-checkbox', function() {
-            const target = $(this).data('target');
-            if (target) {
-                $(`#${target}`).toggleClass('d-none', !this.checked);
-            }
-            // Mostrar/ocultar el input de cantidad asociado
-            const cantidadInput = $(this).nextAll('input[type="number"]').first();
-            if (cantidadInput.length > 0) {
-                cantidadInput.toggleClass('d-none', !this.checked);
-            }
-        });
+                    let contenidoTooltip = `
+                        <div class="fc-event-tooltip-inner">
+                            <b>Usuario:</b> ${props.usuario_nombre ? props.usuario_nombre : 'No disponible'}<br>
+                            <b>Actividad:</b> ${info.event.title}<br>
+                            <b>Hora Inicio:</b> ${formattedStartTime}<br>
+                            <b>Hora Fin:</b> ${formattedEndTime}<br>
+                            <b>Espacio:</b> ${props.espacio_nombre ? props.espacio_nombre : 'No disponible'}<br>
+                            <b>Número de Personas:</b> ${props.num_personas !== null && props.num_personas !== undefined ? props.num_personas : 'No especificado'}<br>
+                            <b>Requerimientos:</b><br>
+                    `;
 
-        // Mostrar/ocultar elementos al marcar/desmarcar checkboxes en el formulario de edición
-        $(document).on('change', '.requerimiento-checkbox', function() {
-            const target = $(this).data('target');
-            if (target) {
-                $(`#${target}`).toggleClass('d-none', !this.checked);
-            }
-            // Mostrar/ocultar el input de cantidad asociado
-            const cantidadInput = $(this).nextAll('input[type="number"]').first();
-            if (cantidadInput.length > 0) {
-                cantidadInput.toggleClass('d-none', !this.checked);
-            }
-        });
+                    if (props.requerimientosArray && props.requerimientosArray.length > 0) {
+                        props.requerimientosArray.forEach(req => {
+                            contenidoTooltip += `- ${req.descripcion ? req.descripcion : ''} ${req.cantidad ? '(Cantidad: ' + req.cantidad + ')' : ''}<br>`;
+                        });
+                    } else {
+                        contenidoTooltip += 'No se solicitaron requerimientos.<br>';
+                    }
+                    contenidoTooltip += `</div>`;
 
-        // Inicialmente ocultar los campos de cantidad que no estén marcados en el formulario de creación
-        $('.form-check').each(function() {
-            const checkbox = $(this).find('.requerimiento-checkbox');
-            const cantidadInput = $(this).find('input[type="number"]');
-            if (!checkbox.prop('checked')) {
-                cantidadInput.addClass('d-none');
-            }
-        });
+                    let tooltipEl = document.getElementById('fc-custom-tooltip'); 
+                    if (!tooltipEl) { 
+                        tooltipEl = document.createElement('div');
+                        tooltipEl.id = 'fc-custom-tooltip';
+                        tooltipEl.style.position = 'absolute';
+                        tooltipEl.style.zIndex = '10000'; 
+                        tooltipEl.style.backgroundColor = '#fff';
+                        tooltipEl.style.border = '1px solid #ccc';
+                        tooltipEl.style.padding = '8px 12px';
+                        tooltipEl.style.borderRadius = '4px';
+                        tooltipEl.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)';
+                        tooltipEl.style.fontSize = '0.875em';
+                        tooltipEl.style.whiteSpace = 'normal';
+                        tooltipEl.style.maxWidth = '300px';
+                        document.body.appendChild(tooltipEl);
+                    }
+                    
+                    tooltipEl.innerHTML = contenidoTooltip;
+                    tooltipEl.style.display = 'block';
 
-        // Inicialmente ocultar los campos de cantidad que no estén marcados en el formulario de edición
-        $(' .form-check').each(function() {
-            const checkbox = $(this).find('.requerimiento-checkbox');
-            const cantidadInput = $(this).find('input[type="number"]');
-            if (!checkbox.prop('checked')) {
-                cantidadInput.addClass('d-none');
-            }
-        });
-    });
+                    tooltipEl.style.left = info.jsEvent.pageX + 15 + 'px'; 
+                    tooltipEl.style.top = info.jsEvent.pageY + 15 + 'px';
+                },
 
-    // Envío del Formulario de Creación con AJAX (se mantiene igual)
-    document.getElementById('formReserva').addEventListener('submit', function(e) {
-        e.preventDefault();
-        fetch(this.action, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-            body: new FormData(this)
-        }).then(response => {
-            if (response.ok) {
-                calendar.refetchEvents();
-                this.reset();
-                bootstrap.Modal.getInstance(document.getElementById('modalReserva')).hide();
-                $('#form-nueva-reserva').removeClass('d-none');
-                $('#form-requerimientos').addClass('d-none');
-                alert('¡Reserva creada exitosamente!'); // Agregamos esta línea
-            } else {
-                // Aquí podríamos agregar lógica para manejar errores si la reserva falla
-                console.error('Error al crear la reserva:', response);
-                alert('Hubo un error al crear la reserva. Por favor, inténtalo de nuevo.');
-            }
-        });
-    });
-});
-</script>
+                eventMouseLeave: function(info) {
+                    let tooltipEl = document.getElementById('fc-custom-tooltip');
+                    if (tooltipEl) {
+                        tooltipEl.style.display = 'none';
+                        tooltipEl.innerHTML = ''; 
+                    }
+                }
+                 }); 
 
-<style>
-.fc-event-tooltip {
-    background-color: #f9f9f9;
-    border: 1px solid #ccc;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-    font-size: 0.9em;
-    white-space: normal; /* Permite que el texto se ajuste */
-    max-width: 300px; /* O el ancho que prefieras */
-}
-</style>
+            calendar.render();
 
-@endsection
+            // Forzar actualización del tamaño por si acaso
+            setTimeout(function() {
+                if (calendar) { // Verificar que calendar exista
+                    calendar.updateSize();
+                }
+            }, 250);
+
+            // Lógica jQuery para el formulario modal (interacciones de campos)
+            $(document).ready(function() {
+                // Mostrar/ocultar campo "Otro espacio"
+                $('#espacio_id').on('change', function() {
+                    if ($(this).val() === 'Otro') {
+                        $('#otro_espacio').removeClass('d-none').prop('disabled', false).prop('required', true); // Hacemos 'otro_espacio' required si "Otro" es seleccionado
+                    } else {
+                        $('#otro_espacio').addClass('d-none').prop('disabled', true).prop('required', false).val('');
+                    }
+                });
+
+                // Navegación entre secciones del formulario
+                $('#btn-siguiente').click(() => {
+                    // Aquí podrías añadir validación de la primera parte del formulario antes de pasar
+                    $('#form-nueva-reserva').addClass('d-none');
+                    $('#form-requerimientos').removeClass('d-none');
+                });
+
+                $('#btn-anterior').click(() => {
+                    $('#form-requerimientos').addClass('d-none');
+                    $('#form-nueva-reserva').removeClass('d-none');
+                });
+
+                // Mostrar/ocultar inputs de cantidad y divs de "otro" para requerimientos
+                // (Esta lógica ya la tenías y parece correcta para la UI)
+                $(document).on('change', '.requerimiento-checkbox', function() {
+                    const isChecked = this.checked;
+                    const targetId = $(this).data('target'); 
+                    const cantidadInput = $(this).siblings('input[type="number"]').first();
+
+                    if (cantidadInput.length > 0) {
+                        cantidadInput.toggleClass('d-none', !isChecked);
+                        if(!isChecked) cantidadInput.val('1'); 
+                    }
+
+                    if (targetId) { 
+                        const targetDiv = $('#' + targetId); // ej. #otro-audiovisual-select
+                        targetDiv.toggleClass('d-none', !isChecked);
+                        if(!isChecked) targetDiv.find('input[type="text"], input[type="number"]').val(''); 
+                    }
+                });
+
+                // Inicialmente ocultar los campos de cantidad y divs "otro" que no estén marcados
+                $('.requerimiento-checkbox').each(function() {
+                    if (!$(this).prop('checked')) {
+                        $(this).siblings('input[type="number"]').first().addClass('d-none');
+                        const targetId = $(this).data('target');
+                        if (targetId) {
+                            $('#' + targetId).addClass('d-none');
+                        }
+                    }
+                });
+            }); // Fin de $(document).ready
+
+            // Lógica para el envío del formulario con AJAX
+            document.getElementById('formReserva').addEventListener('submit', function(e) {
+                e.preventDefault();
+                Log.info('Formulario de reserva enviado vía AJAX'); // Para depurar si se dispara el submit
+
+                fetch(this.action, {
+                    method: 'POST',
+                    headers: { 
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), // Forma robusta de obtener CSRF token
+                        'Accept': 'application/json', // Indicar que esperamos JSON
+                    },
+                    body: new FormData(this)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        // Si la respuesta no es OK, intenta parsear como JSON si es posible, o usa el statusText
+                        return response.json().catch(() => {
+                            throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
+                        }).then(errorData => {
+                            // Si el cuerpo del error es JSON y tiene un mensaje, úsalo
+                            throw new Error(errorData.message || `Error del servidor: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    Log.info('Reserva creada exitosamente vía AJAX:', data);
+                    calendar.refetchEvents();
+                    this.reset(); 
+                    $('#modalReserva').modal('hide'); // Usando jQuery para ocultar el modal
+                    
+                    // Resetear visualmente el formulario a su estado inicial
+                    $('#espacio_id').val('').trigger('change');
+                    $('#otro_espacio').addClass('d-none').prop('disabled', true).prop('required', false).val('');
+                    $('.requerimiento-checkbox').prop('checked', false);
+                    $('.form-check input[type="number"]').addClass('d-none').val('1');
+                    $('[id^="otro-"][id$="-select"]').addClass('d-none').find('input').val('');
+                    $('#form-nueva-reserva').removeClass('d-none');
+                    $('#form-requerimientos').addClass('d-none');
+
+                    alert(data.message || '¡Reserva creada exitosamente!');
+                })
+                .catch(error => {
+                    console.error('Error al crear la reserva (AJAX catch):', error);
+                    alert('Hubo un error al crear la reserva: ' + error.message + '. Por favor, revisa la consola.');
+                });
+            }); // Fin de addEventListener('submit')
+
+        }); // Fin de document.addEventListener('DOMContentLoaded')
+    </script>
+@stop
