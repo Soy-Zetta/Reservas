@@ -92,10 +92,7 @@ class ReservaController extends Controller
 
     // event(new ReservaCreada($reserva)); // Descomentar cuando configures eventos y correos
 
-    return response()->json([
-        'message' => '¡Reserva creada exitosamente!',
-        'reserva' => $reserva->load('requerimientos')
-    ]);
+     return redirect()->route('reservas.calendario')->with('success', '¡Reserva creada exitosamente!');
 }
 
     /**
