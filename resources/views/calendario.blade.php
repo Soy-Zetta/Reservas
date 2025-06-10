@@ -154,7 +154,7 @@
                 <label class="form-check-label">{{ $item }}</label>
                 <div id="{{ \Str::slug($item) }}-select" class="d-none ms-2 d-inline-block">
                 <select class="form-control" name="cantidad_servicios_generales[{{ $item }}]">
-                        @for ($i = 1; $i <= 15; $i++)
+                        @for ($i = 1; $i <= 150; $i++)
                             <option value="{{ $i }}">{{ $i }}</option>
                         @endfor
                     </select>
@@ -169,6 +169,7 @@
             <label class="form-check-label">{{ $otroItemServiciosGenerales }}</label>
             <div id="otro-servicio_general-select" class="d-none ms-2 d-inline-block">
                 <input type="text" class="form-control" name="otro_servicio_general" placeholder="Especifica otro servicio">
+                <input type="number" class="form-control form-control-sm" name="cantidad_comunicaciones[Otro]" value="1" min="1" style="width: 80px;">
             </div>
         </div>
     </div>
