@@ -108,58 +108,37 @@
     </div>
 
     <div>
-        <h6>Audiovisuales</h6>
-        <div class="d-flex flex-column gap-2">
+    <h6>Audiovisuales</h6>
+    <div class="d-flex flex-column gap-2">
+        @php
+            $audiovisualesItems = ['Computador', 'Cámara', 'Conexión a Internet', 'Pantalla para Proyección', 'Pantalla (TV)', 'Video Bin', 'Sonido', 'Micrófono'];
+        @endphp
+        @foreach ($audiovisualesItems as $item)
             <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="audiovisuales[]" value="Computador">
-                <label class="form-check-label">Computador</label>
-                <input type="number" class="form-control form-control-sm ms-2 d-inline-block" name="cantidad_audiovisuales[Computador]" value="1" min="1" style="width: 80px;">
-            </div>
-            <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="audiovisuales[]" value="Cámara">
-                <label class="form-check-label">Cámara</label>
-                <input type="number" class="form-control form-control-sm ms-2 d-inline-block" name="cantidad_audiovisuales[Cámara]" value="1" min="1" style="width: 80px;">
-            </div>
-            <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="audiovisuales[]" value="Conexión a Internet">
-                <label class="form-check-label">Conexión a Internet</label>
-                <input type="number" class="form-control form-control-sm ms-2 d-inline-block" name="cantidad_audiovisuales[Conexión a Internet]" value="1" min="1" style="width: 80px;">
-            </div>
-            <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="audiovisuales[]" value="Pantalla para Proyección">
-                <label class="form-check-label">Pantalla para Proyección</label>
-                <input type="number" class="form-control form-control-sm ms-2 d-inline-block" name="cantidad_audiovisuales[Pantalla para Proyección]" value="1" min="1" style="width: 80px;">
-            </div>
-            <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="audiovisuales[]" value="Pantalla (TV)">
-                <label class="form-check-label">Pantalla (TV)</label>
-                <input type="number" class="form-control form-control-sm ms-2 d-inline-block" name="cantidad_audiovisuales[Pantalla (TV)]" value="1" min="1" style="width: 80px;">
-            </div>
-            <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="audiovisuales[]" value="Video Bin">
-                <label class="form-check-label">Video Bin</label>
-                <input type="number" class="form-control form-control-sm ms-2 d-inline-block" name="cantidad_audiovisuales[Video Bin]" value="1" min="1" style="width: 80px;">
-            </div>
-            <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="audiovisuales[]" value="Sonido">
-                <label class="form-check-label">Sonido</label>
-                <input type="number" class="form-control form-control-sm ms-2 d-inline-block" name="cantidad_audiovisuales[Sonido]" value="1" min="1" style="width: 80px;">
-            </div>
-            <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="audiovisuales[]" value="Micrófono">
-                <label class="form-check-label">Micrófono</label>
-                <input type="number" class="form-control form-control-sm ms-2 d-inline-block" name="cantidad_audiovisuales[Micrófono]" value="1" min="1" style="width: 80px;">
-            </div>
-            <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="audiovisuales[]" value="Otro" data-target="otro-audiovisual-select">
-                <label class="form-check-label">Otro</label>
-                <div id="otro-audiovisual-select" class="d-none ms-2 d-inline-block">
-                    <input type="text" class="form-control form-control-sm" name="otro_audiovisual" placeholder="Especifica otro">
-                    <input type="number" class="form-control form-control-sm" name="cantidad_audiovisuales[Otro]" value="1" min="1" style="width: 80px;">
+                <input class="form-check-input requerimiento-checkbox" type="checkbox"
+                       name="audiovisuales[]" value="{{ $item }}">
+                <label class="form-check-label">{{ $item }}</label>
+                {{-- Contenedor para el input numérico, con d-none inicial --}}
+                <div class="ms-2 d-inline-block d-none">
+                    <input type="number" class="form-control form-control-sm"
+                           name="cantidad_audiovisuales[{{ $item }}]" value="1" min="1" style="width: 80px;">
                 </div>
+            </div>
+        @endforeach
+        {{-- "Otro" para Audiovisuales (ya estaba bien estructurado) --}}
+        <div class="form-check">
+            <input class="form-check-input requerimiento-checkbox" type="checkbox"
+                   name="audiovisuales[]" value="Otro" data-target="otro-audiovisual-select">
+            <label class="form-check-label">Otro</label>
+            <div id="otro-audiovisual-select" class="d-none ms-2 d-inline-block">
+                <input type="text" class="form-control form-control-sm" name="otro_audiovisual" placeholder="Especifica otro">
+                <input type="number" class="form-control form-control-sm" name="cantidad_audiovisuales[Otro]" value="1" min="1" style="width: 80px;">
             </div>
         </div>
     </div>
+</div>
+
+
 
     <h6 class="mt-3">Servicios Generales</h6>
     <div class="d-flex flex-column gap-2">
@@ -194,58 +173,67 @@
         </div>
     </div>
 
-    <div class="mt-3">
-        <h6>Comunicaciones</h6>
-        <div class="d-flex flex-column gap-2">
+   <div class="mt-3">
+    <h6>Comunicaciones</h6>
+    <div class="d-flex flex-column gap-2">
+        @php
+            $comunicacionesItems = ['Fotografía', 'Video'];
+        @endphp
+        @foreach ($comunicacionesItems as $item)
             <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="comunicaciones[]" value="Fotografía">
-                <label class="form-check-label">Fotografía</label>
-                <input type="number" class="form-control form-control-sm ms-2 d-inline-block" name="cantidad_comunicaciones[Fotografía]" value="1" min="1" style="width: 80px;">
-            </div>
-            <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="comunicaciones[]" value="Video">
-                <label class="form-check-label">Video</label>
-                <input type="number" class="form-control form-control-sm ms-2 d-inline-block" name="cantidad_comunicaciones[Video]" value="1" min="1" style="width: 80px;">
-            </div>
-            <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="comunicaciones[]" value="Otro" data-target="otro-comunicacion-select">
-                <label class="form-check-label">Otro</label>
-                <div id="otro-comunicacion-select" class="d-none ms-2 d-inline-block">
-                    <input type="text" class="form-control form-control-sm" name="otro_comunicacion" placeholder="Especifica otra comunicación">
-                    <input type="number" class="form-control form-control-sm" name="cantidad_comunicaciones[Otro]" value="1" min="1" style="width: 80px;">
+                <input class="form-check-input requerimiento-checkbox" type="checkbox"
+                       name="comunicaciones[]" value="{{ $item }}">
+                <label class="form-check-label">{{ $item }}</label>
+                {{-- Contenedor para el input numérico, con d-none inicial --}}
+                <div class="ms-2 d-inline-block d-none">
+                    <input type="number" class="form-control form-control-sm"
+                           name="cantidad_comunicaciones[{{ $item }}]" value="1" min="1" style="width: 80px;">
                 </div>
+            </div>
+        @endforeach
+        {{-- "Otro" para Comunicaciones (ya estaba bien estructurado) --}}
+        <div class="form-check">
+            <input class="form-check-input requerimiento-checkbox" type="checkbox"
+                   name="comunicaciones[]" value="Otro" data-target="otro-comunicacion-select">
+            <label class="form-check-label">Otro</label>
+            <div id="otro-comunicacion-select" class="d-none ms-2 d-inline-block">
+                <input type="text" class="form-control form-control-sm" name="otro_comunicacion" placeholder="Especifica otra comunicación">
+                <input type="number" class="form-control form-control-sm" name="cantidad_comunicaciones[Otro]" value="1" min="1" style="width: 80px;">
             </div>
         </div>
     </div>
+</div>
 
     <div class="mt-3">
-        <h6>Administración</h6>
-        <div class="d-flex flex-column gap-2">
+    <h6>Administración</h6>
+    <div class="d-flex flex-column gap-2">
+        @php
+            $administracionItems = ['Refrigerio', 'Agua', 'Vasos'];
+        @endphp
+        @foreach ($administracionItems as $item)
             <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="administracion[]" value="Refrigerio">
-                <label class="form-check-label">Refrigerio</label>
-                <input type="number" class="form-control form-control-sm ms-2 d-inline-block" name="cantidad_administracion[Refrigerio]" value="1" min="1" style="width: 80px;">
-            </div>
-            <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="administracion[]" value="Agua">
-                <label class="form-check-label">Agua</label>
-                <input type="number" class="form-control form-control-sm ms-2 d-inline-block" name="cantidad_administracion[Agua]" value="1" min="1" style="width: 80px;">
-            </div>
-            <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="administracion[]" value="Vasos">
-                <label class="form-check-label">Vasos</label>
-                <input type="number" class="form-control form-control-sm ms-2 d-inline-block" name="cantidad_administracion[Vasos]" value="1" min="1" style="width: 80px;">
-            </div>
-            <div class="form-check">
-                <input class="form-check-input requerimiento-checkbox" type="checkbox" name="administracion[]" value="Otro" data-target="otro-administracion-select">
-                <label class="form-check-label">Otro</label>
-                <div id="otro-administracion-select" class="d-none ms-2 d-inline-block">
-                    <input type="text" class="form-control form-control-sm" name="otro_administracion" placeholder="Especifica otro">
-                    <input type="number" class="form-control form-control-sm" name="cantidad_administracion[Otro]" value="1" min="1" style="width: 80px;">
+                <input class="form-check-input requerimiento-checkbox" type="checkbox"
+                       name="administracion[]" value="{{ $item }}">
+                <label class="form-check-label">{{ $item }}</label>
+                {{-- Contenedor para el input numérico, con d-none inicial --}}
+                <div class="ms-2 d-inline-block d-none">
+                    <input type="number" class="form-control form-control-sm"
+                           name="cantidad_administracion[{{ $item }}]" value="1" min="1" style="width: 80px;">
                 </div>
+            </div>
+        @endforeach
+        {{-- "Otro" para Administración (ya estaba bien estructurado) --}}
+        <div class="form-check">
+            <input class="form-check-input requerimiento-checkbox" type="checkbox"
+                   name="administracion[]" value="Otro" data-target="otro-administracion-select">
+            <label class="form-check-label">Otro</label>
+            <div id="otro-administracion-select" class="d-none ms-2 d-inline-block">
+                <input type="text" class="form-control form-control-sm" name="otro_administracion" placeholder="Especifica otro">
+                <input type="number" class="form-control form-control-sm" name="cantidad_administracion[Otro]" value="1" min="1" style="width: 80px;">
             </div>
         </div>
     </div>
+</div>
 
 
 
