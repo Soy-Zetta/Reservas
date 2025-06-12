@@ -7,7 +7,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Espacio; // Asegúrate de que este modelo exista y apunte a sem_espacios
 use App\Models\RequerimientoReserva; // Asegúrate de que este modelo exista y apunte a la tabla correcta (ej. sem_requerimientos_reserva)
+
+//MAIL
+use App\Mail\ReservaConfirmada;
+use App\Mail\NuevaReservaNotification;
+use App\Mail\Reserva\Confirmada;
 use Illuminate\Support\Facades\Log; // Útil para depuración
+use Illuminate\Support\Facades\Mail;
+
+
 
 class ReservaController extends Controller
 {
@@ -54,6 +62,24 @@ class ReservaController extends Controller
         'administracion'      => ['otro_campo_texto' => 'otro_administracion',      'campo_cantidad' => 'cantidad_administracion'],
     ];
 
+
+    // Validación y creación de la reserva
+    $reserva = Reserva::create($request->all());
+    // Obtener el usuario autenticado
+    $usuario = auth()->user();
+    
+   // 1. Enviar correo de confirmación al usuario
+        Mail::to($usuario->email)->queue(new ReservaConfirmada($reserva, $usuario));
+    // Enviar notificación a administradores
+    $admins = User::where('rol', 'admin')->get();
+    
+    foreach ($admins as $admin) {
+        Mail::to($admin->email)->send(new NuevaReservaNotification($reserva, $usuario));
+    }
+    
+    return redirect()->route('reservas.index')
+                     ->with('success', 'Reserva creada y correo enviado.');
+
     foreach ($categoriasRequerimientos as $nombreCategoriaInput => $nombresCampos) {
         $otroCampoTextoNombre = $nombresCampos['otro_campo_texto'];
         $cantidadArrayNombre = $nombresCampos['campo_cantidad'];
@@ -89,6 +115,10 @@ class ReservaController extends Controller
             }
         }
     }
+
+
+
+
 
     // event(new ReservaCreada($reserva)); // Descomentar cuando configures eventos y correos
 
