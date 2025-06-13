@@ -237,32 +237,6 @@
 </div>
 
 
-// Requerimientos por Departamento
-{{-- Asumiendo que $departamentos es un array donde la clave es el nombre del departamento y el valor es un array de requerimientos --}}
-<div class="form-group">
-    <label>Requerimientos Adicionales:</label>
-    
-    @foreach($departamentos as $departamento => $requerimientos)
-        <div class="card mb-3">
-            <div class="card-header">{{ ucfirst(str_replace('_', ' ', $departamento)) }}</div>
-            <div class="card-body">
-                @foreach($requerimientos as $requerimiento)
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" 
-                               name="requerimientos[]" 
-                               value="{{ $requerimiento->id }}"
-                               id="req{{ $requerimiento->id }}">
-                        <label class="form-check-label" for="req{{ $requerimiento->id }}">
-                            {{ $requerimiento->nombre }}
-                        </label>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    @endforeach
-</div>
-
-//
 
 
 

@@ -333,24 +333,7 @@ public function getEvents()
 
 
 
-    public function index()
-{
-    $eventos = Reserva::with(['espacio', 'usuario'])
-                ->where('estado', 'aprobada')
-                ->get()
-                ->map(function ($reserva) {
-                    return [
-                        'title' => $reserva->espacio->nombre,
-                        'start' => $reserva->fecha . 'T' . $reserva->hora_inicio,
-                        'end' => $reserva->fecha . 'T' . $reserva->hora_fin,
-                        'url' => route('reservas.show', $reserva->id)
-                    ];
-                });
 
-    return view('calendario.index', [
-        'eventos' => $eventos
-    ]);
-}
 
 
 
