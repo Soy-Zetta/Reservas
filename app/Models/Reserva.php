@@ -74,9 +74,8 @@ class Reserva extends Model
 
     public function requerimientos()
     {
-        return $this->hasMany(RequerimientoReserva::class, 'reserva_id');
+        return $this->belongsToMany(Requerimiento::class);
     }
-
     //define los campos que se pueden asignar de forma masiva
     protected $fillable = [
         'estado',

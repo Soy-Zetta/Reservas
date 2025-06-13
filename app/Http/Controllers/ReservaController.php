@@ -14,6 +14,8 @@ use App\Mail\NuevaReservaNotification;
 use App\Mail\Reserva\Confirmada;
 use Illuminate\Support\Facades\Log; // Útil para depuración
 use Illuminate\Support\Facades\Mail;
+use App\Models\Requerimiento;
+
 
 
 
@@ -37,7 +39,33 @@ class ReservaController extends Controller
         'programa_evento' => $request->input('programa_evento'),
         'aprobado' => 0, // Establecer por defecto como no aprobado
     ];
-
+    // Adjuntar requerimientos a la reserva
+    $reserva->requerimientos()->attach($request->requerimientos);
+    
+    // Obtener requerimientos agrupados por departamento
+    $requerimientosPorDepartamento = $reserva->requerimientos()
+        ->get()
+        ->groupBy('departamento');
+    
+    // Enviar correos por departamento
+    foreach ($requerimientosPorDepartamento as $departamento => $requerimientos) {
+        // Obtener administradores de este departamento
+        $adminsDepartamento = User::whereHas('departamentos', function($query) use ($departamento) {
+                $query->where('nombre', $departamento);
+            })
+            ->where('rol', 'admin')
+            ->get();
+        
+        foreach ($adminsDepartamento as $admin) {
+            Mail::to($admin->email)->queue(new RequerimientosDepartamento(
+                $reserva,
+                $usuario,
+                $departamento,
+                $requerimientos
+            ));
+        }
+    }
+    
     $selectedEspacioId = $request->input('espacio_id');
     $otroEspacioValue = trim((string) $request->input('otro_espacio')); // Convertir a string y trim
 
@@ -132,6 +160,13 @@ class ReservaController extends Controller
     {
         $espacios = Espacio::all(); // Cargar todos los espacios disponibles desde la base de datos
         return view('reservas.create', compact('espacios')); // Asegúrate de que la vista se llame 'reservas.create' o ajusta según tu proyecto
+        $requerimientosPorDepartamento = Requerimiento::all()
+            ->groupBy('departamento');
+        
+        return view('reservas.create', [
+            'departamentos' => $requerimientosPorDepartamento
+        ]);
+
     }
 
     /**
@@ -292,6 +327,32 @@ public function getEvents()
         // return redirect()->route('reservas.index')->with('success', 'Reserva eliminada correctamente.'); // Si fuera una app tradicional
         return response()->json(['message' => 'Reserva eliminada con éxito']);
     }
+
+
+
+
+
+
+    public function index()
+{
+    $eventos = Reserva::with(['espacio', 'usuario'])
+                ->where('estado', 'aprobada')
+                ->get()
+                ->map(function ($reserva) {
+                    return [
+                        'title' => $reserva->espacio->nombre,
+                        'start' => $reserva->fecha . 'T' . $reserva->hora_inicio,
+                        'end' => $reserva->fecha . 'T' . $reserva->hora_fin,
+                        'url' => route('reservas.show', $reserva->id)
+                    ];
+                });
+
+    return view('calendario.index', [
+        'eventos' => $eventos
+    ]);
+}
+
+
 
     // Método privado sugerido para no repetir código de requerimientos:
     // private function sincronizarRequerimientos(Request $request, Reserva $reserva)
