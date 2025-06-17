@@ -24,134 +24,55 @@ class ReservaController extends Controller
     /**
      * Guarda una nueva reserva en la base de datos.
      */
-   public function store(Request $request)
-{
-    Log::info('ReservaController@store: Petición recibida', $request->all());
 
-    // 1. Preparar datos para la Reserva principal
-    $datosReservaPrincipal = [
+
+
+
+    public function store(Request $request)
+   
+{
+    Log::info('ReservaController@store: Petición recibida', $request->all());   
+    // Validación básica (agregar más según necesidad)
+    $request->validate([
+        'fecha' => 'required|date',
+        'hora_inicio' => 'required',
+        'hora_fin' => 'required|after:hora_inicio',
+        'nombre_actividad' => 'required|string|max:255',
+        'num_personas' => 'required|integer|min:1',
+        'programa_evento' => 'nullable|string|max:255',
+        // ... otros campos
+    ]);
+
+    // 1. Crear reserva PRINCIPAL
+    $reserva = Reserva::create([
         'usuario_id' => Auth::id(),
-        'fecha' => $request->input('fecha'),
-        'hora_inicio' => $request->input('hora_inicio'),
+        'fecha' => $request->fecha,
+        'hora_inicio' => $request->hora_inicio,
         'hora_fin' => $request->input('hora_fin'),
         'nombre_actividad' => $request->input('nombre_actividad'),
         'num_personas' => $request->input('num_personas'),
         'programa_evento' => $request->input('programa_evento'),
-        'aprobado' => 0, // Establecer por defecto como no aprobado
-    ];
-    // Adjuntar requerimientos a la reserva
-    $reserva->requerimientos()->attach($request->requerimientos);
-    
-    // Obtener requerimientos agrupados por departamento
-    $requerimientosPorDepartamento = $reserva->requerimientos()
-        ->get()
-        ->groupBy('departamento');
-    
-    // Enviar correos por departamento
-    foreach ($requerimientosPorDepartamento as $departamento => $requerimientos) {
-        // Obtener administradores de este departamento
-        $adminsDepartamento = User::whereHas('departamentos', function($query) use ($departamento) {
-                $query->where('nombre', $departamento);
-            })
-            ->where('rol', 'admin')
-            ->get();
-        
-        foreach ($adminsDepartamento as $admin) {
-            Mail::to($admin->email)->queue(new RequerimientosDepartamento(
-                $reserva,
-                $usuario,
-                $departamento,
-                $requerimientos
-            ));
-        }
-    }
-    
-    $selectedEspacioId = $request->input('espacio_id');
-    $otroEspacioValue = trim((string) $request->input('otro_espacio')); // Convertir a string y trim
+        'aprobado' => 0,
+    ]);
 
-    if ($selectedEspacioId === 'Otro') {
-        $datosReservaPrincipal['espacio_id'] = null;
-        $datosReservaPrincipal['otro_espacio'] = !empty($otroEspacioValue) ? $otroEspacioValue : null;
-    } else {
-        $datosReservaPrincipal['espacio_id'] = $selectedEspacioId;
-        $datosReservaPrincipal['otro_espacio'] = null;
+    // 2. Procesar ESPACIO (normal/otro)
+    if ($request->espacio_id === 'Otro') {
+        $reserva->update(['otro_espacio' => $request->otro_espacio]);
     }
 
-    // 2. Crear la Reserva principal
-    // Asegúrate de que tu modelo Reserva.php apunte a la tabla correcta ('reservas' o 'sem_reservas')
-    $reserva = Reserva::create($datosReservaPrincipal);
-    Log::info('ReservaController@store: Reserva principal creada con ID: ' . $reserva->id);
+    // 3. Procesar REQUERIMIENTOS
+    $this->procesarRequerimientos($request, $reserva);
 
-    // 3. Procesar y guardar los requerimientos
-    $categoriasRequerimientos = [
-        'audiovisuales'       => ['otro_campo_texto' => 'otro_audiovisual',       'campo_cantidad' => 'cantidad_audiovisuales'],
-        'servicios_generales' => ['otro_campo_texto' => 'otro_servicio_general',  'campo_cantidad' => 'cantidad_servicios_generales'],
-        'comunicaciones'      => ['otro_campo_texto' => 'otro_comunicacion',      'campo_cantidad' => 'cantidad_comunicaciones'],
-        'administracion'      => ['otro_campo_texto' => 'otro_administracion',      'campo_cantidad' => 'cantidad_administracion'],
-    ];
+    // 4. Enviar EMAILS
+    $this->enviarNotificaciones($reserva);
 
-
-    // Validación y creación de la reserva
-    $reserva = Reserva::create($request->all());
-    // Obtener el usuario autenticado
-    $usuario = auth()->user();
-    
-   // 1. Enviar correo de confirmación al usuario
-        Mail::to($usuario->email)->queue(new ReservaConfirmada($reserva, $usuario));
-    // Enviar notificación a administradores
-    $admins = User::where('rol', 'admin')->get();
-    
-    foreach ($admins as $admin) {
-        Mail::to($admin->email)->send(new NuevaReservaNotification($reserva, $usuario));
-    }
-    
-    return redirect()->route('reservas.index')
-                     ->with('success', 'Reserva creada y correo enviado.');
-
-    foreach ($categoriasRequerimientos as $nombreCategoriaInput => $nombresCampos) {
-        $otroCampoTextoNombre = $nombresCampos['otro_campo_texto'];
-        $cantidadArrayNombre = $nombresCampos['campo_cantidad'];
-
-        if ($request->has($nombreCategoriaInput) && is_array($request->input($nombreCategoriaInput))) {
-            Log::info("Procesando requerimientos para categoría: {$nombreCategoriaInput}", $request->input($nombreCategoriaInput));
-
-            foreach ($request->input($nombreCategoriaInput) as $itemSeleccionado) {
-                $descripcionFinal = $itemSeleccionado;
-                $cantidadFinal = $request->input("{$cantidadArrayNombre}.{$itemSeleccionado}");
-
-                if ($itemSeleccionado === 'Otro') {
-                    $textoOtroEspecifico = trim((string) $request->input($otroCampoTextoNombre));
-                    if (!empty($textoOtroEspecifico)) {
-                        $descripcionFinal = $textoOtroEspecifico;
-                        // La cantidad para "Otro" ya se obtuvo de, por ejemplo, cantidad_audiovisuales[Otro]
-                    } else {
-                        Log::info("Requerimiento 'Otro' para {$nombreCategoriaInput} omitido porque el campo de texto '{$otroCampoTextoNombre}' está vacío.");
-                        continue; 
-                    }
-                }
-                
-                if (!empty($descripcionFinal)) {
-                    // Asegúrate de que RequerimientoReserva.php apunte a la tabla correcta (ej. sem_requerimientos_reserva)
-                    RequerimientoReserva::create([
-                        'reserva_id' => $reserva->id,
-                        'tipo' => $nombreCategoriaInput,
-                        'descripcion' => $descripcionFinal,
-                        'cantidad' => $cantidadFinal, // Será null si no hay input de cantidad para "Otro" en esa sección
-                    ]);
-                    Log::info("Requerimiento guardado: Tipo={$nombreCategoriaInput}, Desc={$descripcionFinal}, Cant={$cantidadFinal}");
-                }
-            }
-        }
-    }
-
-
-
-
-
-    // event(new ReservaCreada($reserva)); // Descomentar cuando configures eventos y correos
-
-     return redirect()->route('reservas.calendario')->with('success', '¡Reserva creada exitosamente!');
+    return redirect()->route('reservas.calendario')
+                     ->with('success', '¡Reserva creada exitosamente!');
 }
+
+
+
+
 
     /**
      * Muestra el formulario de creación de reservas.
