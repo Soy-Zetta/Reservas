@@ -24,11 +24,11 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
 
 Route::middleware(['auth'])->prefix('reservas')->group(function () {
+    // ✅ Rutas fijas primero
+    Route::get('/test-modal', fn() => view('test-modal'));
     Route::get('/calendario', [ReservaController::class, 'calendario'])->name('reservas.calendario');
     Route::get('/events', [ReservaController::class, 'getEvents'])->name('reservas.events');
     Route::post('/', [ReservaController::class, 'store'])->name('reservas.store');
-    Route::get('/{reserva}', [ReservaController::class, 'show'])->name('reservas.show');
-    Route::get('/{reserva}/edit', [ReservaController::class, 'edit'])->name('reservas.edit');
-    Route::put('/{reserva}', [ReservaController::class, 'update'])->name('reservas.update');
-    Route::delete('/{reserva}', [ReservaController::class, 'destroy'])->name('reservas.destroy');
 });
+
+Route::resource('reservas', ReservaController::class);
