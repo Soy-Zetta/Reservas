@@ -2,6 +2,32 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReservaController;
+use App\Mail\ReservaMail;
+
+//MAIL
+use App\Mail\PruebaMail;
+use Illuminate\Support\Facades\Mail;
+
+
+// Rutas para administración de reservas
+Route::prefix('admin')->group(function () {
+    Route::get('/reservas', [ReservaController::class, 'index'])->name('admin.reservas.index');
+    Route::post('/reservas/{reserva}/aprobar', [ReservaController::class, 'aprobar'])->name('reservas.aprobar');
+    Route::post('/reservas/{reserva}/rechazar', [ReservaController::class, 'rechazar'])->name('reservas.rechazar');
+});
+
+
+Route::get('/test-email', function () {
+    Mail::to('jeison0603k@gmail.com')->send(new App\Mail\TestEmail());
+    return "Correo HTML enviado!";
+});
+//MAIL
+Route::get('/enviar-correo', function () {
+    Mail::to('jeison0603k@gmail.com')->send(new PruebaMail());
+    return "Correo enviado.";
+});
+
+
 
 Route::get('/', function () {
     return redirect('/login');

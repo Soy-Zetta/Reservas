@@ -2,12 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Reserva;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Espacio; // Asegúrate de que este modelo exista y apunte a sem_espacios
-use App\Models\RequerimientoReserva; // Asegúrate de que este modelo exista y apunte a la tabla correcta (ej. sem_requerimientos_reserva)
-use Illuminate\Support\Facades\Log; // Útil para depuración
+use Illuminate\Support\Facades\Log; 
+use Illuminate\Support\Facades\Mail;
+
+use App\Models\Reserva;
+use App\Models\Espacio;
+use App\Models\RequerimientoReserva;
+use App\Models\User;
+
+use App\Mail\ReservaConfirmada;
+use App\Mail\NuevaReservaNotification;
+
+
 
 class ReservaController extends Controller
 {
@@ -16,6 +25,7 @@ class ReservaController extends Controller
      */
    public function store(Request $request)
 {
+try{
     Log::info('ReservaController@store: Petición recibida', $request->all());
 
     // 1. Preparar datos para la Reserva principal
@@ -54,6 +64,24 @@ class ReservaController extends Controller
         'administracion'      => ['otro_campo_texto' => 'otro_administracion',      'campo_cantidad' => 'cantidad_administracion'],
     ];
 
+
+    // Validación y creación de la reserva
+    $reserva = Reserva::create($request->all());
+    // Obtener el usuario autenticado
+    $usuario = auth()->user();
+    
+   // 1. Enviar correo de confirmación al usuario
+        Mail::to($usuario->email)->queue(new ReservaConfirmada($reserva, $usuario));
+    // Enviar notificación a administradores
+    $admins = User::where('rol', 'admin')->get();
+    
+    foreach ($admins as $admin) {
+        Mail::to($admin->email)->send(new NuevaReservaNotification($reserva, $usuario));
+    }
+    
+    return redirect()->route('reservas.index')
+                     ->with('success', 'Reserva creada y correo enviado.');
+
     foreach ($categoriasRequerimientos as $nombreCategoriaInput => $nombresCampos) {
         $otroCampoTextoNombre = $nombresCampos['otro_campo_texto'];
         $cantidadArrayNombre = $nombresCampos['campo_cantidad'];
@@ -90,8 +118,16 @@ class ReservaController extends Controller
         }
     }
 
+
     
-     return response()->json(['success' => true]);
+      return response()->json(['message' => 'Reserva creada correctamente']);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'error' => 'Ocurrió un error inesperado',
+            'detalles' => $e->getMessage(),
+            'linea' => $e->getLine()
+        ], 500);
+    }
 
 }
 
