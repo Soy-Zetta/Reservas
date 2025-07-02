@@ -15,7 +15,8 @@ use App\Mail\Reserva\Confirmada;
 use Illuminate\Support\Facades\Log; // Útil para depuración
 use Illuminate\Support\Facades\Mail;
 use App\Models\Requerimiento;
-
+use App\Mail\ReservaDepartamental;
+use App\Mail\ReservaCompleta;
 
 
 
@@ -28,11 +29,11 @@ class ReservaController extends Controller
 
 
 
-    public function store(Request $request)
-   
+public function store(Request $request)
 {
-    Log::info('ReservaController@store: Petición recibida', $request->all());   
-    // Validación básica (agregar más según necesidad)
+    Log::info('ReservaController@store: Petición recibida', $request->all());
+    
+    // Validación básica
     $request->validate([
         'fecha' => 'required|date',
         'hora_inicio' => 'required',
@@ -61,17 +62,71 @@ class ReservaController extends Controller
     }
 
     // 3. Procesar REQUERIMIENTOS
-    $this->procesarRequerimientos($request, $reserva);
+    $requerimientosSeleccionados = $this->procesarRequerimientos($request, $reserva);
+    
+    // 4. Enviar EMAILS - NUEVA LÓGICA DE NOTIFICACIONES
+    try {
+        // Enviar correo al solicitante
+        Mail::to($user)->send(new ReservaConfirmada($reserva, 'valor_extra'));
 
-    // 4. Enviar EMAILS
-    $this->enviarNotificaciones($reserva);
+        
+        // Enviar correo completo a reservas@
+        Mail::to(env('MAIL_RESERVAS'))->send(new ReservaCompleta($reserva, $requerimientosSeleccionados));
+        
+        // Enviar correos específicos por departamento
+        $departamentosNotificados = [];
+        
+        foreach ($requerimientosSeleccionados as $req) {
+            $depto = config("requirements.$req.department");
+            
+            if ($depto && !in_array($depto, $departamentosNotificados)) {
+                $departamentosNotificados[] = $depto;
+                
+                // Filtrar solo los requerimientos de este departamento
+                $reqsDepartamento = array_filter($requerimientosSeleccionados, function($r) use ($depto) {
+                    return config("requirements.$r.department") === $depto;
+                });
+                
+                Mail::to(env('MAIL_'.strtoupper($depto)))
+                    ->send(new ReservaDepartamental($reserva, $reqsDepartamento));
+            }
+        }
+        
+        Log::info('Correos enviados exitosamente');
+    } catch (\Exception $e) {
+        Log::error('Error enviando correos: '.$e->getMessage());
+    }
 
     return redirect()->route('reservas.calendario')
-                     ->with('success', '¡Reserva creada exitosamente!');
+                    ->with('success', '¡Reserva creada exitosamente!');
 }
 
 
 
+    private function procesarRequerimientos(Request $request, Reserva $reserva)
+{
+    $categorias = [
+        'audiovisuales' => ['otro' => 'otro_audiovisual', 'cantidad' => 'cantidad_audiovisuales'],
+        // ... otras categorías
+    ];
+
+    foreach ($categorias as $categoria => $campos) {
+        if (!$request->has($categoria)) continue;
+        
+        foreach ($request->input($categoria) as $item) {
+            $descripcion = ($item === 'Otro') 
+                ? $request->input($campos['otro'])
+                : $item;
+                
+            RequerimientoReserva::create([
+                'reserva_id' => $reserva->id,
+                'tipo' => $categoria,
+                'descripcion' => $descripcion,
+                'cantidad' => $request->input("{$campos['cantidad']}.{$item}"),
+            ]);
+        }
+    }
+}
 
 
     /**

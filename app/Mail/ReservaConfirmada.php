@@ -22,7 +22,7 @@ class ReservaConfirmada extends Mailable
 
     public function build()
     {
-        return $this->subject('Confirmación de Reserva #' . $this->reserva->id)
+        return $this->subject('Confirmación de Reserva')
                     ->view('emails.reserva_confirmada');
     }
 }
