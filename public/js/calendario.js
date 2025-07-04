@@ -2,22 +2,38 @@
 const eventosUrl = document.querySelector('meta[name="url-events"]')?.content || '/reservas/events';
 
 // Mostrar modal de reserva
-window.addEventListener('abrir-modal-reserva', function (e) {
-    console.log('✅ Se recibió el evento abrir-modal-reserva');
+    window.addEventListener('abrir-modal-reserva', function (e) {
+        console.log('✅ Se recibió el evento abrir-modal-reserva');
 
-    const modal = document.getElementById('modalReserva');
-    if (!modal) return;
+        const fechaSeleccionada = new Date(e.detail?.fecha); // formato YYYY-MM-DD
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
 
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+        const tresDiasDespues = new Date(hoy);
+        tresDiasDespues.setDate(hoy.getDate() + 3);
 
-    if (e.detail?.fecha) {
-        const input = document.getElementById('campoFecha');
-        if (input) input.value = e.detail.fecha;
-    }
+        if (fechaSeleccionada < tresDiasDespues) {
+            alert('❌ Las reservas deben realizarse con al menos 3 días de anticipación.');
+            return; // 🔥 No abrir el formulario
+        }
 
-    mostrarPaso(1); // Reiniciar al paso 1
-});
+        resetearFormularioReserva();
+
+        const modal = document.getElementById('modalReserva');
+        if (!modal) return;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        if (e.detail?.fecha) {
+            const input = document.getElementById('campoFecha');
+            if (input) input.value = e.detail.fecha;
+        }
+
+        mostrarPaso(1);
+    });
+
+
 
 
 // Funciones para pasos
@@ -83,27 +99,48 @@ document.getElementById('btnEnviar')?.addEventListener('click', async (e) => {
     console.log('⏰ Hora fin:', document.getElementById('campoHoraFinal')?.value);
 
 
-    // Paso 2 - Requerimientos
-    const categorias = ['audiovisuales', 'servicios_generales', 'comunicaciones', 'administracion'];
+    
+   // Paso 2 - Requerimientos
+const categorias = ['audiovisuales', 'servicios_generales', 'comunicaciones', 'administracion'];
 
-    categorias.forEach(cat => {
+categorias.forEach(cat => {
+    const mapaNombres = {
+        'audiovisuales': 'otro_audiovisual',
+        'servicios_generales': 'otro_servicio_general',
+        'comunicaciones': 'otro_comunicacion',
+        'administracion': 'otro_administracion',
+    };
+
+    // ✅ Guardar requerimientos estándar (checkboxes marcados)
         const checkboxes = document.querySelectorAll(`input[name="${cat}[]"]:checked`);
         checkboxes.forEach(checkbox => {
-            formData.append(`${cat}[]`, checkbox.value);
-            const cantidadInput = checkbox.parentElement.querySelector('input[type="number"], select');
-            if (cantidadInput) {
-                formData.append(`cantidad_${cat}[${checkbox.value}]`, cantidadInput.value || '');
+            const valor = checkbox.value;
+            const cantidadInput = checkbox.parentElement.querySelector('select, input[type="number"]');
+
+            // Evitar duplicar el "Otro" si ya lo vamos a procesar después
+            if (valor !== 'Otro') {
+                formData.append(`${cat}[]`, valor);
+                if (cantidadInput) {
+                    formData.append(`cantidad_${cat}[${valor}]`, cantidadInput.value || '1');
+                }
             }
         });
 
+        // ✅ FORZAR el envío del campo "Otro" si tiene contenido, incluso si el checkbox no está marcado
         const otroText = document.querySelector(`#otro_${cat} input[type="text"]`);
-        const otroCantidad = document.querySelector(`#otro_${cat} input[type="number"]`);
+        
 
-        if (otroText && otroCantidad && otroText.value.trim() !== '') {
-            formData.append(`otro_${cat}`, otroText.value);
-            formData.append(`cantidad_${cat}[Otro]`, otroCantidad.value || '1');
+        if (otroText && otroText.value.trim() !== '') {
+            const nombreCampoOtro = mapaNombres[cat];
+            formData.append(`cantidad_${cat}[Otro]`, '1');
+            formData.append(nombreCampoOtro, otroText.value.trim());
+           
+
+            console.log(`✅ [FORZADO] ${cat}: Otro →`, otroText.value.trim());
         }
     });
+
+
 
         const reservaId = window.reservaEditandoId;
         const url = reservaId ? `/reservas/${reservaId}` : '/reservas';
@@ -162,23 +199,39 @@ document.getElementById('btnCerrarInfoReserva')?.addEventListener('click', () =>
     document.getElementById('modalInfoReserva')?.classList.remove('show');
 });
 
-// Mostrar detalles de la reserva
-function mostrarInfoReservaHtml(html) {
-    const content = document.getElementById('reservaInfoContent');
-    const modal = document.getElementById('modalInfoReserva');
 
-    if (!content || !modal) return;
 
-    content.innerHTML = html;
-            html += `
-        <div class="flex justify-end gap-2 mt-4">
-            <button id="btnEditarReserva" data-id="${reservaId}" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 text-sm">Editar</button>
-            <button id="btnEliminarReserva" data-id="${reservaId}" class="bg-red-600 text-white px-4 py-1 rounded hover:bg-red-700 text-sm">Eliminar</button>
-        </div>`;
+function resetearFormularioReserva() {
+    // 🔄 Paso 1 - Campos básicos
+    document.getElementById('campoActividad').value = '';
+    document.getElementById('campoFecha').value = '';
+    document.getElementById('campoHoraInicio').value = '';
+    document.getElementById('campoHoraFinal').value = '';
+    document.getElementById('campoPrograma').value = '';
+    document.getElementById('campoPersonas').value = '';
+    document.getElementById('otroEspacio').value = '';
 
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    const espacioSelect = document.getElementById('campoEspacio');
+    if (espacioSelect) espacioSelect.value = '';
+
+    // 🔄 Paso 2 - Limpiar checkboxes y campos "Otro"
+    const categorias = ['audiovisuales', 'servicios_generales', 'comunicaciones', 'administracion'];
+    categorias.forEach(cat => {
+        document.querySelectorAll(`input[name="${cat}[]"]`).forEach(cb => cb.checked = false);
+        const otroDiv = document.getElementById(`otro_${cat}`);
+        if (otroDiv) {
+            otroDiv.classList.add('hidden');
+            const inputTexto = otroDiv.querySelector('input[type="text"]');
+            if (inputTexto) inputTexto.value = '';
+        }
+    });
+
+    // 🔄 Limpiar estado de edición y resetear botón
+    window.reservaEditandoId = null;
+    document.getElementById('btnEnviar').textContent = 'Reservar';
+    mostrarPaso(1);
 }
+
 
 
 // FullCalendar y eventos
@@ -208,10 +261,15 @@ window.addEventListener('DOMContentLoaded', function () {
                 detail: { fecha: clickedDate }
             }));
         },
-        eventClick: function (info) {
+
+            eventClick: function (info) {
             const reservaId = info.event.id;
             const content = document.getElementById('reservaInfoContent');
             const modal = document.getElementById('modalInfoReserva');
+
+            // Listas de ítems que NO deben mostrar cantidad
+            const sinCantidadAudiovisuales = ['Conexión a Internet', 'Pantalla para Proyección', 'Video Bin', 'Sonido'];
+            const sinCantidadComunicaciones = ['Fotografía', 'Video'];
 
             if (!content || !modal) return alert('Contenedor de detalles no encontrado.');
 
@@ -235,9 +293,40 @@ window.addEventListener('DOMContentLoaded', function () {
 
                     if (data.requerimientos?.length > 0) {
                         html += '<p><strong>Requerimientos:</strong></p><ul>';
+
+                        const requerimientosEstandar = [
+                            // 🔹 Audiovisuales
+                            'Computador', 'Cámara', 'Conexión a Internet', 'Pantalla para Proyección',
+                            'Pantalla (TV)', 'Video Bin', 'Sonido', 'Micrófono',
+
+                            // 🔹 Servicios Generales
+                            'Mesa', 'Mantel', 'Extensión eléctrica', 'Multitoma',
+
+                            // 🔹 Comunicaciones
+                            'Fotografía', 'Video',
+
+                            // 🔹 Administración
+                            'Refrigerio', 'Agua', 'Vasos'
+                        ];
+
                         data.requerimientos.forEach(req => {
-                            html += `<li>${req.descripcion || ''} ${req.cantidad ? '(Cantidad: ' + req.cantidad + ')' : ''}</li>`;
+                            const desc = req.descripcion?.trim();
+                            const tipo = req.tipo;
+                            let mostrarCantidad = true;
+
+                            // Excepciones: no mostrar cantidad si está en las listas
+                            if (tipo === 'audiovisuales' && sinCantidadAudiovisuales.some(item => item.toLowerCase() === desc?.toLowerCase())) {
+                            mostrarCantidad = false;
+                            }
+
+                            if (tipo === 'comunicaciones' && sinCantidadComunicaciones.some(item => item.toLowerCase() === desc?.toLowerCase())) {
+                            mostrarCantidad = false;
+                            }
+
+
+                            html += `<li>${desc}${(mostrarCantidad && req.cantidad) ? ' (Cantidad: ' + req.cantidad + ')' : ''}</li>`;
                         });
+
                         html += '</ul>';
                     } else {
                         html += '<p><strong>Requerimientos:</strong> No se solicitaron.</p>';
@@ -247,14 +336,15 @@ window.addEventListener('DOMContentLoaded', function () {
                         html += `<p><strong>Reservado por:</strong> ${data.usuario.name || 'No disponible'}</p>`;
                     }
 
-                    // Agregar botones
                     html += `
                         <div class="flex justify-end gap-2 mt-4">
                             <button id="btnEditarReserva" class="bg-yellow-400 text-black px-4 py-1 rounded hover:bg-yellow-500 text-sm">Editar</button>
                             <button id="btnEliminarReserva" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600 text-sm">Eliminar</button>
                         </div>`;
 
+
                     content.innerHTML = html;
+
 
                     // Eliminar
                     document.getElementById('btnEliminarReserva')?.addEventListener('click', () => {
@@ -281,11 +371,16 @@ window.addEventListener('DOMContentLoaded', function () {
                     // Editar
                     document.getElementById('btnEditarReserva')?.addEventListener('click', () => {
                         modal.classList.remove('show');
+                   
+                        // Select de espacios
+                      const espacioSelect = document.getElementById('campoEspacio');
+                    espacioSelect.classList.remove('hidden'); // 👈 Esto asegura que se vea
+                    espacioSelect.value = data.espacio_id || 'Otro';
+                    espacioSelect.dispatchEvent(new Event('change'));
+                    const campoPersonas = document.getElementById('campoPersonas');
+                    espacioSelect.disabled = false; // ✅ Asegúrate de que no esté gris
 
-                        // llenar formulario
-                    const espacioSelect = document.getElementById('campoEspacio');
-                        espacioSelect.value = data.espacio_id || 'Otro';
-                        espacioSelect.dispatchEvent(new Event('change'));
+
 
 
                         document.getElementById('otroEspacio').value = data.otro_espacio || '';
@@ -294,36 +389,85 @@ window.addEventListener('DOMContentLoaded', function () {
                         document.getElementById('campoHoraFinal').value = data.hora_fin?.substring(0, 5) || '';
                         document.getElementById('campoActividad').value = data.nombre_actividad || '';
                         document.getElementById('campoPrograma').value = data.programa_evento || '';
+         
+         
+         
+            const existeOpcion = [...campoPersonas.options].some(opt => opt.value == data.num_personas);
+            if (!existeOpcion && data.num_personas) {
+                const nuevaOpcion = document.createElement('option');
+                nuevaOpcion.value = data.num_personas;
+                nuevaOpcion.text = data.num_personas;
+                campoPersonas.appendChild(nuevaOpcion);
+            }
+            campoPersonas.value = data.num_personas || '';
 
-                        const campoPersonas = document.getElementById('campoPersonas');
-                        const existeOpcion = [...campoPersonas.options].some(opt => opt.value == data.num_personas);
-                        if (!existeOpcion && data.num_personas) {
-                            const nuevaOpcion = document.createElement('option');
-                            nuevaOpcion.value = data.num_personas;
-                            nuevaOpcion.text = data.num_personas;
-                            campoPersonas.appendChild(nuevaOpcion);
-                        }
-                        campoPersonas.value = data.num_personas || '';
+                campoEspacio.classList.remove('hidden');
+                campoEspacio.disabled = false;
+
+                campoPersonas.classList.remove('hidden');
+                campoPersonas.disabled = false;
+
+
 
 
                         // Limpiar requerimientos
                         document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-                        document.querySelectorAll('select').forEach(s => s.classList.add('hidden'));
 
-                        if (Array.isArray(data.requerimientos)) {
-                            data.requerimientos.forEach(req => {
-                                const checkbox = [...document.querySelectorAll(`input[type="checkbox"][value="${req.descripcion}"]`)]
-                                    .find(cb => cb.name.includes(req.tipo));
-                                if (checkbox) {
-                                    checkbox.checked = true;
-                                    const cantidad = checkbox.parentElement.querySelector('select, input[type="number"]');
-                                    if (cantidad) {
-                                        cantidad.classList.remove('hidden');
-                                        cantidad.value = req.cantidad || 1;
-                                    }
-                                }
-                            });
+                        // ✅ Solo ocultamos los selects de cantidad dentro de cada checkbox (no los principales)
+                        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                            const cantidadField = checkbox.parentElement.querySelector('select, input[type="number"]');
+                            if (cantidadField) {
+                                cantidadField.classList.add('hidden');
+                            }
+                        });
+
+                            if (Array.isArray(data.requerimientos)) {
+                data.requerimientos.forEach(req => {
+                    const checkboxes = [...document.querySelectorAll(`input[type="checkbox"]`)];
+                    const checkbox = checkboxes.find(cb => cb.value === req.descripcion && cb.name.includes(req.tipo));
+
+                    if (checkbox) {
+                        checkbox.checked = true;
+
+                        const cantidad = checkbox.parentElement.querySelector('select, input[type="number"]');
+                        const tipo = req.tipo;
+                        const descripcion = req.descripcion?.trim();
+
+                        // ✅ Detectar si el ítem no debe mostrar cantidad
+                        const ocultarCantidad =
+                            (tipo === 'audiovisuales' && sinCantidadAudiovisuales.some(item => item.toLowerCase() === descripcion.toLowerCase())) ||
+                            (tipo === 'comunicaciones' && sinCantidadComunicaciones.some(item => item.toLowerCase() === descripcion.toLowerCase()));
+
+                        if (cantidad) {
+                            if (!ocultarCantidad) {
+                                cantidad.classList.remove('hidden');
+                                cantidad.value = req.cantidad || 1;
+                            } else {
+                                cantidad.classList.add('hidden');
+                            }
                         }
+
+                    } else {
+                        // ✅ Si es un campo "Otro"
+                        const otroDiv = document.getElementById(`otro_${req.tipo}`);
+                        if (otroDiv) {
+                            otroDiv.classList.remove('hidden');
+
+                            const inputTexto = otroDiv.querySelector('input[type="text"]');
+                            const cbOtro = otroDiv.querySelector('input[type="checkbox"][value="Otro"]');
+
+                            if (cbOtro) {
+                                cbOtro.checked = true;
+                                cbOtro.dataset.forzado = '1'; // Evita que se oculte automáticamente
+                                cbOtro.dispatchEvent(new Event('change'));
+                            }
+
+                            if (inputTexto) inputTexto.value = req.descripcion;
+                        }
+                    }
+                });
+            }
+
 
                         const modalForm = document.getElementById('modalReserva');
                         modalForm.classList.remove('hidden');
@@ -363,39 +507,61 @@ window.addEventListener('DOMContentLoaded', function () {
 });
 
 
-// Mostrar u ocultar input de cantidad según checkbox
-function toggleCantidad(checkbox) {
-    const parent = checkbox.parentElement;
-    const inputCantidad = parent.querySelector('input[type="number"]');
-    const selectCantidad = parent.querySelector('select');
 
-    if (inputCantidad) {
-        inputCantidad.classList.toggle('hidden', !checkbox.checked);
-    }
-    if (selectCantidad) {
-        selectCantidad.classList.toggle('hidden', !checkbox.checked);
-    }
-}
 
-function toggleOtro(tipo) {
-    const div = document.getElementById(`otro_${tipo}`);
-    if (div) {
-        div.classList.toggle('hidden');
-    }
-}
-
-// 🧠 Escucha todos los cambios en checkboxes
-document.addEventListener('change', function (e) {
-    if (e.target.matches('input[type="checkbox"]')) {
-        const checkbox = e.target;
-        toggleCantidad(checkbox);
-
-        if (checkbox.value === 'Otro') {
-            const tipo = checkbox.name.includes('servicios_generales') ? 'servicios' :
-                         checkbox.name.includes('audiovisuales') ? 'audiovisuales' :
-                         checkbox.name.includes('comunicaciones') ? 'comunicaciones' :
-                         checkbox.name.includes('administracion') ? 'administracion' : null;
-            if (tipo) toggleOtro(tipo);
+    function toggleOtro(tipo) {
+        const div = document.getElementById(`otro_${tipo}`);
+        if (div) {
+            div.classList.toggle('hidden');
         }
     }
-});
+
+    
+    // ✅ Activador general para mostrar/ocultar campos de cantidad y "Otro" al marcar checkboxes
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                 const cantidad = this.parentElement.querySelector('select');
+
+            // Detectar si este item es de una categoría con excepciones
+            const nombreCategoria = this.name.split('[')[0]; // ej: 'audiovisuales'
+            const valor = this.value;
+
+            const sinCantidadAudiovisuales = ['Conexión a Internet', 'Pantalla para Proyección', 'Video Beam', 'Sonido'];
+            const sinCantidadComunicaciones = ['Fotografía', 'Video'];
+
+            let ocultarCantidad = false;
+
+            if (nombreCategoria === 'audiovisuales' && sinCantidadAudiovisuales.includes(valor)) {
+                ocultarCantidad = true;
+            }
+
+            if (nombreCategoria === 'comunicaciones' && sinCantidadComunicaciones.includes(valor)) {
+                ocultarCantidad = true;
+            }
+
+            if (cantidad) {
+                // Si el checkbox está marcado Y el item NO está en la lista de excepciones → mostrar
+                cantidad.classList.toggle('hidden', !this.checked || ocultarCantidad);
+            }
+
+
+                // Mostrar u ocultar campos de texto si el valor es "Otro"
+                if (checkbox.value === 'Otro') {
+                    let tipo = null;
+                    if (checkbox.name.includes('audiovisuales')) tipo = 'audiovisuales';
+                    if (checkbox.name.includes('servicios_generales')) tipo = 'servicios_generales';
+                    if (checkbox.name.includes('comunicaciones')) tipo = 'comunicaciones';
+                    if (checkbox.name.includes('administracion')) tipo = 'administracion';
+
+                    if (tipo) {
+                        const divOtro = document.getElementById(`otro_${tipo}`);
+                        if (divOtro) {
+                            divOtro.classList.toggle('hidden', !checkbox.checked);
+                        }
+                    }
+                }
+            });
+        });
+    });
+
