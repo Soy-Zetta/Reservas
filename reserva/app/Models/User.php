@@ -11,20 +11,15 @@ use Laravel\Jetstream\HasTeams;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
+
+
+
+
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, HasProfilePhoto, HasTeams, Notifiable, TwoFactorAuthenticatable, HasRoles;
 
     
-    // Nombre de la tabla
-    protected $table = 'sem_users';
-    public $timestamps = false;
-    // Atributos que se pueden asignar masivamente
-    protected $fillable = [
-        'username',  // Nombre de usuario
-        'email',
-        'password',
-    ];
 
     // Atributos que deben ser ocultos al serializar
     protected $hidden = [
@@ -47,5 +42,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+
+    protected $table = 'users'; 
+
+
 }
 

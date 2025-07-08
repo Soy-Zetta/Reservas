@@ -298,7 +298,7 @@ return [
     |
     */
 
-    'menu' => [
+   'menu' => [
         // Navbar items:
         [
             'type' => 'navbar-search',
@@ -375,6 +375,11 @@ return [
                     'url' => '#',
                 ],
             ],
+        ],
+        [
+            'text' => 'Calendario',
+            'url'  => 'admin/calendario',
+            'icon' => 'fas fa-fw fa-calendar-alt',
         ],
         ['header' => 'labels'],
         [
