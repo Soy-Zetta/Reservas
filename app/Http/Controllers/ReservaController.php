@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reserva;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Espacio; // Asegúrate de que este modelo exista y apunte a sem_espacios
@@ -13,10 +14,28 @@ class ReservaController extends Controller
 {
     /**
      * Guarda una nueva reserva en la base de datos.
-     */
-   public function store(Request $request)
-{
-    Log::info('ReservaController@store: Petición recibida', $request->all());
+        */
+    public function store(Request $request)
+    {
+        // 🛡️ Validación: mínimo 3 días de anticipación
+        try {
+            $fechaSolicitud = Carbon::parse($request->input('fecha'));
+            $minimaPermitida = now()->addDays(3)->startOfDay();
+
+            if ($fechaSolicitud->lt($minimaPermitida)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => '❌ Las reservas deben realizarse con al menos 3 días de anticipación.'
+                ], 422);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => '⚠️ Fecha inválida. Asegúrate de seleccionar una fecha válida para la reserva.'
+            ], 400);
+        }
+
+        Log::info('ReservaController@store: Petición recibida', $request->all());
 
     // 1. Preparar datos para la Reserva principal
     $datosReservaPrincipal = [
@@ -60,37 +79,43 @@ class ReservaController extends Controller
 
         if ($request->has($nombreCategoriaInput) && is_array($request->input($nombreCategoriaInput))) {
             Log::info("Procesando requerimientos para categoría: {$nombreCategoriaInput}", $request->input($nombreCategoriaInput));
-
+            // 1. Guardar todos los ítems seleccionados (excepto "Otro")
             foreach ($request->input($nombreCategoriaInput) as $itemSeleccionado) {
-                $descripcionFinal = $itemSeleccionado;
+                if ($itemSeleccionado === 'Otro') continue;
+
                 $cantidadFinal = $request->input("{$cantidadArrayNombre}.{$itemSeleccionado}");
 
-                if ($itemSeleccionado === 'Otro') {
-                    $textoOtroEspecifico = trim((string) $request->input($otroCampoTextoNombre));
-                    if (!empty($textoOtroEspecifico)) {
-                        $descripcionFinal = $textoOtroEspecifico;
-                        // La cantidad para "Otro" ya se obtuvo de, por ejemplo, cantidad_audiovisuales[Otro]
-                    } else {
-                        Log::info("Requerimiento 'Otro' para {$nombreCategoriaInput} omitido porque el campo de texto '{$otroCampoTextoNombre}' está vacío.");
-                        continue; 
-                    }
-                }
-                
-                if (!empty($descripcionFinal)) {
-                    // Asegúrate de que RequerimientoReserva.php apunte a la tabla correcta (ej. sem_requerimientos_reserva)
-                    RequerimientoReserva::create([
-                        'reserva_id' => $reserva->id,
-                        'tipo' => $nombreCategoriaInput,
-                        'descripcion' => $descripcionFinal,
-                        'cantidad' => $cantidadFinal, // Será null si no hay input de cantidad para "Otro" en esa sección
-                    ]);
-                    Log::info("Requerimiento guardado: Tipo={$nombreCategoriaInput}, Desc={$descripcionFinal}, Cant={$cantidadFinal}");
-                }
+                RequerimientoReserva::create([
+                    'reserva_id' => $reserva->id,
+                    'tipo' => $nombreCategoriaInput,
+                    'descripcion' => $itemSeleccionado,
+                    'cantidad' => $cantidadFinal ?? 1,
+                ]);
+            }
+
+            // 2. Guardar el "Otro", si se escribió
+            $textoOtroEspecifico = trim((string) $request->input($otroCampoTextoNombre));
+            $cantidadOtro = 1; // ✅ fijo por defecto, ya que eliminaste el campo de cantidad
+
+
+            if (!empty($textoOtroEspecifico)) {
+                RequerimientoReserva::create([
+                    'reserva_id' => $reserva->id,
+                    'tipo' => $nombreCategoriaInput,
+                    'descripcion' => $textoOtroEspecifico,
+                    'cantidad' => 1,
+                ]);
             }
         }
     }
 
-    
+        Log::info("Otro servicio_general recibido: ", [
+        'texto' => $textoOtroEspecifico,
+        'cantidad' => $cantidadOtro
+    ]);
+
+
+
      return response()->json(['success' => true]);
 
 }
@@ -191,7 +216,7 @@ public function getEvents()
     public function show(Reserva $reserva) 
     {
         // Carga las relaciones que quieres mostrar
-        $reserva->load(['usuario', 'espacio', 'requerimientos']);
+        $reserva = Reserva::with(['usuario', 'espacio', 'requerimientos'])->findOrFail($reserva->id);
         return response()->json($reserva);
     }
  

@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+    @extends('adminlte::page')
 
 @section('title', 'Calendario de Reservas')
 
@@ -189,7 +189,7 @@
                 @endforeach
                 <option value="Otro">Otro</option>
             </select>
-            <input type="text" id="otroEspacio" name="otro_espacio" class="w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-blue-300 focus:border-blue-300 opacity-50" placeholder="Especifique el espacio" disabled>
+            <input type="text" id="otroEspacio" name="otro_espacio" class="w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-blue-300 focus:border-blue-300 opacity-50" placeholder="Especifique el espacio">
             </div>
         </div>
 
@@ -248,41 +248,40 @@
             
                     
             <!-- 🔹 Sección Audiovisuales con alineación perfecta -->
-        <div class="mb-6">
-            <h3 class="text-lg font-semibold text-blue-700 border-b pb-1 mb-3">Audiovisuales</h3>
-            <div class="space-y-2">
-                @php
-                    $audiovisuales = ['Computador', 'Cámara', 'Conexión a Internet', 'Pantalla para Proyección', 'Pantalla (TV)', 'Video Bin', 'Sonido', 'Micrófono'];
-                @endphp
+                <div class="mb-6">
+                <h3 class="text-lg font-semibold text-blue-700 border-b pb-1 mb-3">Audiovisuales</h3>
+                <div class="space-y-2">
+                    @php
+                        $audiovisuales = ['Computador', 'Cámara', 'Conexión a Internet', 'Pantalla para Proyección', 'Pantalla (TV)', 'Video Bin', 'Sonido', 'Micrófono'];
+                        $sinCantidad = ['Conexión a Internet', 'Pantalla para Proyección', 'Video Bin', 'Sonido'];
+                    @endphp
 
-                @foreach ($audiovisuales as $item)
-                    <div class="form-item">
-                        <input type="checkbox" id="audio-{{ $loop->index }}" name="audiovisuales[]" value="{{ $item }}">
-                        <label for="audio-{{ $loop->index }}">{{ $item }}</label>
-                        <select name="cantidad_audiovisuales[{{ $item }}]" class="hidden border-gray-300 rounded-md px-2 py-1 text-sm shadow-sm">
-                            @for ($i = 1; $i <= 30; $i++)
-                                <option value="{{ $i }}">{{ $i }}</option>
-                            @endfor
-                        </select>
+                    @foreach ($audiovisuales as $item)
+                        <div class="form-item">
+                            <input type="checkbox" id="audio-{{ $loop->index }}" name="audiovisuales[]" value="{{ $item }}">
+                            <label for="audio-{{ $loop->index }}">{{ $item }}</label>
+
+                            @if (!in_array($item, $sinCantidad))
+                                <select name="cantidad_audiovisuales[{{ $item }}]" class="hidden ...">
+                                    @for ($i = 1; $i <= 30; $i++)
+                                        <option value="{{ $i }}">{{ $i }}</option>
+                                    @endfor
+                                </select>
+                            @endif
+                        </div>
+                    @endforeach
+
+                    <!-- Otro audiovisual -->
+                    <div class="form-item ml-1">
+                        <input type="checkbox" id="audioOtro" name="audiovisuales[]" value="Otro">
+                        <label for="audioOtro">Otro</label>
                     </div>
-                @endforeach
-
-                            <!-- Otro audiovisual -->
-                <div class="form-item ml-1">
-                    <input type="checkbox" id="audioOtro" name="audiovisuales[]" value="Otro">
-                    <label for="audioOtro">Otro</label>
+                    <div id="otro_audiovisuales" class="hidden ml-6 space-y-2 mt-2">
+                        <input type="text" name="otro_audiovisual" placeholder="Especifica otro audiovisual" class="w-full border-gray-300 rounded-md px-3 py-1 text-sm">                 
+                    </div>
                 </div>
-                <div id="otro_audiovisuales" class="hidden ml-6 space-y-2 mt-2">
-                    <input type="text" name="otro_audiovisual" placeholder="Especifica otro audiovisual" class="w-full border-gray-300 rounded-md px-3 py-1 text-sm">
-                    <select name="cantidad_audiovisuales[Otro]" class="w-24 border-gray-300 rounded-md px-2 py-1 text-sm">
-                        @for ($i = 1; $i <= 50; $i++)
-                            <option value="{{ $i }}">{{ $i }}</option>
-                        @endfor
-                    </select>
-                </div>
-
             </div>
-        </div>
+
 
 
 
@@ -301,7 +300,7 @@
                         <input type="checkbox" id="serv-{{ $loop->index }}" name="servicios_generales[]" value="{{ $item }}">
                         <label for="serv-{{ $loop->index }}">{{ $item }}</label>
                         <select name="cantidad_servicios_generales[{{ $item }}]" class="hidden border-gray-300 rounded-md px-2 py-1 text-sm shadow-sm">
-                            @for ($i = 1; $i <= 50; $i++)
+                            @for ($i = 1; $i <= 20; $i++)
                                 <option value="{{ $i }}">{{ $i }}</option>
                             @endfor
                         </select>
@@ -314,13 +313,8 @@
                     <input type="checkbox" id="servOtro" name="servicios_generales[]" value="Otro">
                     <label for="servOtro">Otro</label>
                 </div>
-                <div id="otro_servicios" class="hidden ml-6 space-y-2 mt-2">
-                    <input type="text" name="otro_servicio_general" placeholder="Especifica otro servicio" class="w-full border-gray-300 rounded-md px-3 py-1 text-sm">
-                    <select name="cantidad_servicios_generales[Otro]" class="w-24 border-gray-300 rounded-md px-2 py-1 text-sm">
-                        @for ($i = 1; $i <= 50; $i++)
-                            <option value="{{ $i }}">{{ $i }}</option>
-                        @endfor
-                    </select>
+                <div id="otro_servicios_generales" class="hidden ml-6 space-y-2 mt-2">
+                    <input type="text" name="otro_servicio_generales" placeholder="Especifica otro servicio" class="w-full border-gray-300 rounded-md px-3 py-1 text-sm">                    
                 </div>
 
             </div>
@@ -356,11 +350,6 @@
                 </div>
                 <div id="otro_comunicaciones" class="hidden ml-6 space-y-2 mt-2">
                     <input type="text" name="otro_comunicacion" placeholder="Especifica otra comunicación" class="w-full border-gray-300 rounded-md px-3 py-1 text-sm">
-                    <select name="cantidad_comunicaciones[Otro]" class="w-24 border-gray-300 rounded-md px-2 py-1 text-sm">
-                        @for ($i = 1; $i <= 50; $i++)
-                            <option value="{{ $i }}">{{ $i }}</option>
-                        @endfor
-                    </select>
                 </div>
 
             </div>
@@ -394,12 +383,7 @@
                     <label for="adminOtro">Otro</label>
                 </div>
                 <div id="otro_administracion" class="hidden ml-6 space-y-2 mt-2">
-                    <input type="text" name="otro_administracion" placeholder="Especifica otro recurso" class="w-full border-gray-300 rounded-md px-3 py-1 text-sm">
-                    <select name="cantidad_administracion[Otro]" class="w-24 border-gray-300 rounded-md px-2 py-1 text-sm">
-                        @for ($i = 1; $i <= 50; $i++)
-                            <option value="{{ $i }}">{{ $i }}</option>
-                        @endfor
-                    </select>
+                    <input type="text" name="otro_administracion" placeholder="Especifica otro recurso" class="w-full border-gray-300 rounded-md px-3 py-1 text-sm">                  
                 </div>
 
             </div>

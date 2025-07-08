@@ -1,0 +1,19 @@
+[90m= [39m{#5637
+    +"[1mid[22m": [35m482[39m,
+    +"[1mname[22m": "[32mAdministrator[39m",
+    +"[1musername[22m": "[32madmin[39m",
+    +"[1memail[22m": "[32minformatica@colamer.edu.co[39m",
+    +"[1mpassword[22m": "[32m$2y$10$M2UkoAy3Fy9iqgtJhSqXWey.fsEmnJdmuHVWhp2jhZakJHBURk9XC[39m",
+    +"[1mblock[22m": [35m0[39m,
+    +"[1msendEmail[22m": [35m1[39m,
+    +"[1mregisterDate[22m": "[32m2019-04-30 13:07:12[39m",
+    +"[1mlastvisitDate[22m": "[32m2025-05-09 12:22:49[39m",
+    +"[1mactivation[22m": "[32m0[39m",
+    +"[1mparams[22m": "[32m{"admin_style":"","admin_language":"","language":"","editor":"","timezone":""}[39m",
+    +"[1mlastResetTime[22m": "[32m0000-00-00 00:00:00[39m",
+    +"[1mresetCount[22m": [35m0[39m,
+    +"[1motpKey[22m": "",
+    +"[1motep[22m": "",
+    +"[1mrequireReset[22m": [35m0[39m,
+  }
+
