@@ -1,0 +1,31 @@
+[33mcabec21[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfix[m[33m)[m fallas 23/06
+[33m273c39a[m Reservas 13/06 v2 bugs
+[33m9e6e61b[m Reservas 13/06
+[33m3201ed1[m[33m ([m[1;31morigin/dev[m[33m, [m[1;32mdev[m[33m)[m Merge branch 'dev' of https://github.com/Soy-Zetta/Reservas into dev
+[33mfdbb536[m Implementación de Mail 12/06
+[33md773238[m Repositorio Estable funcional mejorado(actual 10/06)
+[33md8f4af3[m Repositorio estable funcional 10/06
+[33m2d6e93a[m pagina actual reservando con errores visuales
+[33m8eba217[m Ya Reserva
+[33m0c80f80[m Create prueba 2
+[33m1b70c09[m Create prueba
+[33m1019ef0[m[33m ([m[1;32mmain[m[33m)[m ReservaLTE Calendario
+[33mf716a34[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m elimine database
+[33m49980a6[m Merge pull request #1 from Soy-Zetta/dev
+[33me3ce3c1[m se integró el adminLTE3
+[33m85f6a75[m se configuro teams jetstream
+[33mc39afe7[m Cambié las migraciones por defecto de jetstream para que funcione con la base de datos actual de intracolamer
+[33m2bb2925[m se conectó a la base de datos remota del colegio con base de datos colamercali_semin_test
+[33m40c2c72[m se modifico user.php
+[33m21be79c[m se añadio libreria spatie para roles y permisos
+[33m51b39b3[m se agregó ajuste de idioma español en jetstream
+[33m4448324[m agregue el logo del colegio americano en la vista del proyecto resources/views/components/authentication-card-logo.blade.php y de la vista resources/views/components/application-logo.blade.php
+[33mfc8a2ab[m base jetstream, livewire 1.0
+[33m5f08b2d[m base jetstream, livewire
+[33m856ce64[m base repositorio
+[33mcf17ae8[m se configuró jetstream
+[33mf33a9d1[m pruebas
+[33m72237d4[m se configura base de datos
+[33m6351f5a[m Eliminada carpeta node_modules y package-lock.json, y reinstaladas dependencias
+[33m782e703[m Eliminada carpeta node_modules y package-lock.json, y reinstaladas dependencias
+[33maca820a[m Base proyecto reserva
