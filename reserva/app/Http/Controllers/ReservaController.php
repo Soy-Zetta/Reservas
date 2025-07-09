@@ -20,6 +20,7 @@ use App\Mail\ReservaDepartamental;
 use App\Mail\ReservaCompleta;
 
 
+use Illuminate\Support\Facades\Log; // Útil para depuración
 
 class ReservaController extends Controller
 {
@@ -48,11 +49,11 @@ class ReservaController extends Controller
 
         Log::info('ReservaController@store: Petición recibida', $request->all());
 
-    // 1. Crear reserva PRINCIPAL
-    $reserva = Reserva::create([
+    // 1. Preparar datos para la Reserva principal
+    $datosReservaPrincipal = [
         'usuario_id' => Auth::id(),
-        'fecha' => $request->fecha,
-        'hora_inicio' => $request->hora_inicio,
+        'fecha' => $request->input('fecha'),
+        'hora_inicio' => $request->input('hora_inicio'),
         'hora_fin' => $request->input('hora_fin'),
         'nombre_actividad' => $request->input('nombre_actividad'),
         'num_personas' => $request->input('num_personas'),
@@ -106,6 +107,79 @@ private function procesarRequerimientos(Request $request, Reserva $reserva)
     }
 }
 
+        'aprobado' => 0, // Establecer por defecto como no aprobado
+    ];
+
+    $selectedEspacioId = $request->input('espacio_id');
+    $otroEspacioValue = trim((string) $request->input('otro_espacio')); // Convertir a string y trim
+
+    if ($selectedEspacioId === 'Otro') {
+        $datosReservaPrincipal['espacio_id'] = null;
+        $datosReservaPrincipal['otro_espacio'] = !empty($otroEspacioValue) ? $otroEspacioValue : null;
+    } else {
+        $datosReservaPrincipal['espacio_id'] = $selectedEspacioId;
+        $datosReservaPrincipal['otro_espacio'] = null;
+    }
+
+    // 2. Crear la Reserva principal
+    // Asegúrate de que tu modelo Reserva.php apunte a la tabla correcta ('reservas' o 'sem_reservas')
+    $reserva = Reserva::create($datosReservaPrincipal);
+    Log::info('ReservaController@store: Reserva principal creada con ID: ' . $reserva->id);
+
+    // 3. Procesar y guardar los requerimientos
+    $categoriasRequerimientos = [
+        'audiovisuales'       => ['otro_campo_texto' => 'otro_audiovisual',       'campo_cantidad' => 'cantidad_audiovisuales'],
+        'servicios_generales' => ['otro_campo_texto' => 'otro_servicio_general',  'campo_cantidad' => 'cantidad_servicios_generales'],
+        'comunicaciones'      => ['otro_campo_texto' => 'otro_comunicacion',      'campo_cantidad' => 'cantidad_comunicaciones'],
+        'administracion'      => ['otro_campo_texto' => 'otro_administracion',      'campo_cantidad' => 'cantidad_administracion'],
+    ];
+
+    foreach ($categoriasRequerimientos as $nombreCategoriaInput => $nombresCampos) {
+        $otroCampoTextoNombre = $nombresCampos['otro_campo_texto'];
+        $cantidadArrayNombre = $nombresCampos['campo_cantidad'];
+
+        if ($request->has($nombreCategoriaInput) && is_array($request->input($nombreCategoriaInput))) {
+            Log::info("Procesando requerimientos para categoría: {$nombreCategoriaInput}", $request->input($nombreCategoriaInput));
+            // 1. Guardar todos los ítems seleccionados (excepto "Otro")
+            foreach ($request->input($nombreCategoriaInput) as $itemSeleccionado) {
+                if ($itemSeleccionado === 'Otro') continue;
+
+                $cantidadFinal = $request->input("{$cantidadArrayNombre}.{$itemSeleccionado}");
+
+                RequerimientoReserva::create([
+                    'reserva_id' => $reserva->id,
+                    'tipo' => $nombreCategoriaInput,
+                    'descripcion' => $itemSeleccionado,
+                    'cantidad' => $cantidadFinal ?? 1,
+                ]);
+            }
+
+            // 2. Guardar el "Otro", si se escribió
+            $textoOtroEspecifico = trim((string) $request->input($otroCampoTextoNombre));
+            $cantidadOtro = 1; // ✅ fijo por defecto, ya que eliminaste el campo de cantidad
+
+
+            if (!empty($textoOtroEspecifico)) {
+                RequerimientoReserva::create([
+                    'reserva_id' => $reserva->id,
+                    'tipo' => $nombreCategoriaInput,
+                    'descripcion' => $textoOtroEspecifico,
+                    'cantidad' => 1,
+                ]);
+            }
+        }
+    }
+
+        Log::info("Otro servicio_general recibido: ", [
+        'texto' => $textoOtroEspecifico,
+        'cantidad' => $cantidadOtro
+    ]);
+
+
+
+     return response()->json(['success' => true]);
+
+}
 
     /**
      * Muestra el formulario de creación de reservas.
@@ -114,13 +188,6 @@ private function procesarRequerimientos(Request $request, Reserva $reserva)
     {
         $espacios = Espacio::all(); // Cargar todos los espacios disponibles desde la base de datos
         return view('reservas.create', compact('espacios')); // Asegúrate de que la vista se llame 'reservas.create' o ajusta según tu proyecto
-        $requerimientosPorDepartamento = Requerimiento::all()
-            ->groupBy('departamento');
-        
-        return view('reservas.create', [
-            'departamentos' => $requerimientosPorDepartamento
-        ]);
-
     }
 
     /**
@@ -216,11 +283,18 @@ public function getEvents()
  
     public function update(Request $request, Reserva $reserva)
     {
-        
-
+         try {
         // Validaciones (ejemplo, ajústalas según necesidad)
         $request->validate([
-            'espacio_id' => 'required_without:otro_espacio|nullable|exists:sem_espacios,id', // Si usas sem_espacios
+            'espacio_id' => [
+            'required_without:otro_espacio',
+            'nullable',
+            function ($attribute, $value, $fail) {
+                if ($value !== 'Otro' && !\App\Models\Espacio::where('id', $value)->exists()) {
+                    $fail("El espacio seleccionado no es válido.");
+                }
+            },
+        ],
             'otro_espacio' => 'required_without:espacio_id|nullable|string|max:255',
             'fecha' => 'required|date',
             'hora_inicio' => 'required|date_format:H:i',
@@ -250,25 +324,51 @@ public function getEvents()
         // Actualizar requerimientos: usualmente es más fácil borrarlos y recrearlos
         $reserva->requerimientos()->delete(); // Borra los requerimientos antiguos
 
-        // Re-crea los requerimientos (misma lógica que en store)
         $categoriasRequerimientos = [
-            'audiovisuales'       => ['otro_campo_texto' => 'otro_audiovisual',       'campo_cantidad' => 'cantidad_audiovisuales'],
-            'servicios_generales' => ['otro_campo_texto' => 'otro_servicio_general',  'campo_cantidad' => 'cantidad_servicios_generales'],
-            'comunicaciones'      => ['otro_campo_texto' => 'otro_comunicacion',      'campo_cantidad' => 'cantidad_comunicaciones'],
-            'administracion'      => ['otro_campo_texto' => 'otro_administracion',      'campo_cantidad' => 'cantidad_administracion'],
-        ];
+        'audiovisuales'       => ['otro_campo_texto' => 'otro_audiovisual',       'campo_cantidad' => 'cantidad_audiovisuales'],
+        'servicios_generales' => ['otro_campo_texto' => 'otro_servicio_general',  'campo_cantidad' => 'cantidad_servicios_generales'],
+        'comunicaciones'      => ['otro_campo_texto' => 'otro_comunicacion',      'campo_cantidad' => 'cantidad_comunicaciones'],
+        'administracion'      => ['otro_campo_texto' => 'otro_administracion',    'campo_cantidad' => 'cantidad_administracion'],
+    ];
 
-        foreach ($categoriasRequerimientos as $nombreCategoriaInput => $nombresCampos) {
-            // ... (misma lógica de bucle y creación de RequerimientoReserva que en el método store) ...
-            // Copia el bucle interno de la función store aquí para procesar los requerimientos.
-            // Es importante que esta lógica sea idéntica o muy similar.
-            // Para no repetir código, podrías mover la lógica de guardar requerimientos
-            // a un método privado dentro de este controlador, y llamarlo desde store() y update().
-            // Por ejemplo: $this->sincronizarRequerimientos($request, $reserva);
+    foreach ($categoriasRequerimientos as $categoria => $campos) {
+        $itemsSeleccionados = $request->input($categoria, []);
+        $cantidades = $request->input($campos['campo_cantidad'], []);
+
+        foreach ($itemsSeleccionados as $item) {
+            if ($item === 'Otro') {
+                continue; // "Otro" lo tratamos aparte
+            }
+
+            $reserva->requerimientos()->create([
+                'tipo'        => $categoria,
+                'descripcion' => $item,
+                'cantidad'    => isset($cantidades[$item]) ? (int) $cantidades[$item] : 1,
+            ]);
         }
 
-        // return redirect()->route('reservas.index')->with('success', 'Reserva actualizada correctamente.'); // Si fuera una app tradicional
+        // Si se seleccionó un "Otro" personalizado
+        $otroTexto = $request->input($campos['otro_campo_texto']);
+        $cantidadOtro = $request->input($campos['campo_cantidad'] . '.Otro', 1);
+
+        if ($otroTexto) {
+            $reserva->requerimientos()->create([
+                'tipo'        => $categoria,
+                'descripcion' => trim($otroTexto),
+                'cantidad'    => (int) $cantidadOtro,
+            ]);
+        }
+    }
+
         return response()->json(['message' => 'Reserva actualizada con éxito', 'reserva' => $reserva->load('requerimientos')]);
+          } catch (\Throwable $e) {
+        // Este bloque captura y muestra el error
+        return response()->json([
+            'error' => 'Ocurrió un error inesperado',
+            'detalles' => $e->getMessage(),
+            'linea' => $e->getLine()
+        ], 500);
+    }
     }
     
     public function destroy(Reserva $reserva)
@@ -281,15 +381,6 @@ public function getEvents()
         // return redirect()->route('reservas.index')->with('success', 'Reserva eliminada correctamente.'); // Si fuera una app tradicional
         return response()->json(['message' => 'Reserva eliminada con éxito']);
     }
-
-
-
-
-
-
-
-
-
 
     // Método privado sugerido para no repetir código de requerimientos:
     // private function sincronizarRequerimientos(Request $request, Reserva $reserva)

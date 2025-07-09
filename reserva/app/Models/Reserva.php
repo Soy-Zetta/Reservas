@@ -70,15 +70,18 @@ class Reserva extends Model
         return $this->belongsTo(User::class, 'usuario_id');
     }
 
-    // (Método espacio ya definido arriba, se elimina duplicado)
+    public function espacio()
+    {
+        return $this->belongsTo(Espacio::class, 'espacio_id');
+    }
 
     public function requerimientos()
     {
-        return $this->belongsToMany(Requerimiento::class);
+        return $this->hasMany(RequerimientoReserva::class, 'reserva_id');
     }
+
     //define los campos que se pueden asignar de forma masiva
     protected $fillable = [
-        'estado',
         'usuario_id',
         'espacio_id',
         'otro_espacio',

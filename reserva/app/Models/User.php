@@ -21,13 +21,6 @@ class User extends Authenticatable
 
     
 
-
-
-    public function departamentos()
-    {
-        return $this->belongsToMany(Departamento::class);
-    }
-
     // Atributos que deben ser ocultos al serializar
     protected $hidden = [
         'password',
@@ -50,7 +43,9 @@ class User extends Authenticatable
         ];
     }
 
+
     protected $table = 'users'; 
+
 
 }
 

@@ -58,3 +58,11 @@ Route::middleware(['auth'])->prefix('reservas')->group(function () {
     Route::put('/{reserva}', [ReservaController::class, 'update'])->name('reservas.update');
     Route::delete('/{reserva}', [ReservaController::class, 'destroy'])->name('reservas.destroy');
 });
+    // ✅ Rutas fijas primero
+    Route::get('/test-modal', fn() => view('test-modal'));
+    Route::get('/calendario', [ReservaController::class, 'calendario'])->name('reservas.calendario');
+    Route::get('/events', [ReservaController::class, 'getEvents'])->name('reservas.events');
+    Route::post('/', [ReservaController::class, 'store'])->name('reservas.store');
+});
+
+Route::resource('reservas', ReservaController::class);

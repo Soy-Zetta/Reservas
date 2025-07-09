@@ -27,7 +27,7 @@ class CreateNewUser implements CreatesNewUsers
                 'string',
                 'email',
                 'max:255',
-                'unique:sem_users,email',
+                 'unique:sem_users,email',
             ],
             'password' => $this->passwordRules(),
         ])->validate();

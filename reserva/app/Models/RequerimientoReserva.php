@@ -21,8 +21,6 @@ class RequerimientoReserva extends Model
         'tipo',
         'descripcion',
         'cantidad',
-        'nombre',
-        'departamento'
     ];
 
     /**
@@ -37,6 +35,6 @@ class RequerimientoReserva extends Model
      */
     public function reserva()
     {
-        return $this->belongsToMany(Reserva::class);
+        return $this->belongsTo(Reserva::class, 'reserva_id');
     }
 }
