@@ -33,8 +33,8 @@ class RequerimientoReserva extends Model
     /**
      * Obtiene la reserva a la que pertenece este requerimiento.
      */
-    public function reserva()
-    {
-        return $this->belongsTo(Reserva::class, 'reserva_id');
-    }
+public function reserva()
+{
+    return $this->belongsTo(Reserva::class, 'reserva_id');
+}
 }

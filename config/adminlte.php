@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'title' => 'AdminLTE 3',
+    'title' => 'Colamer',
     'title_prefix' => '',
     'title_postfix' => '',
 
@@ -30,7 +30,7 @@ return [
     |
     */
 
-    'use_ico_only' => false,
+    'use_ico_only' => true,
     'use_full_favicon' => false,
 
     /*
@@ -63,8 +63,8 @@ return [
     |
     */
 
-    'logo' => '<b>Admin</b>LTE',
-    'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
+    'logo' => '<b>Colamer</b>',
+    'logo_img' => 'vendor/adminlte/dist/img/ColAmer.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
@@ -113,7 +113,7 @@ return [
         'enabled' => true,
         'mode' => 'fullscreen',
         'img' => [
-            'path' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
+            'path' => 'vendor/adminlte/dist/img/ColAmer.png',
             'alt' => 'AdminLTE Preloader Image',
             'effect' => 'animation__shake',
             'width' => 60,
@@ -134,10 +134,10 @@ return [
     */
 
     'usermenu_enabled' => true,
-    'usermenu_header' => false,
+    'usermenu_header' => true,
     'usermenu_header_class' => 'bg-primary',
     'usermenu_image' => false,
-    'usermenu_desc' => false,
+    'usermenu_desc' => true,
     'usermenu_profile_url' => false,
 
     /*
@@ -299,105 +299,134 @@ return [
     */
 
    'menu' => [
-        // Navbar items:
-        [
-            'type' => 'navbar-search',
-            'text' => 'search',
-            'topnav_right' => true,
+    // =============================================
+    // NUEVO ITEM PARA GESTIÓN DE USUARIOS (AGREGADO AL INICIO)
+    // =============================================
+    [
+        'text' => 'Gestión Usuarios',
+        'icon' => 'fas fa-users',
+        'restricted_to' => 'informatica@colamer.edu.co',
+        'submenu' => [
+            [
+                'text' => 'Listado',
+                'url' => 'admin/usuarios',
+                'icon' => 'fas fa-list',
+                
+            ],
+            [
+                'text' => 'Crear',
+                'url' => 'admin/usuarios/crear',
+                'icon' => 'fas fa-user-plus',
+                
+            ],
         ],
-        [
-            'type' => 'fullscreen-widget',
-            'topnav_right' => true,
-        ],
+    ],
 
-        // Sidebar items:
-        [
-            'type' => 'sidebar-menu-search',
-            'text' => 'search',
-        ],
-        [
-            'text' => 'blog',
-            'url' => 'admin/blog',
-            'can' => 'manage-blog',
-        ],
-        [
-            'text' => 'pages',
-            'url' => 'admin/pages',
-            'icon' => 'far fa-fw fa-file',
-            'label' => 4,
-            'label_color' => 'success',
-        ],
-        ['header' => 'account_settings'],
-        [
-            'text' => 'profile',
-            'url' => 'admin/settings',
-            'icon' => 'fas fa-fw fa-user',
-        ],
-        [
-            'text' => 'change_password',
-            'url' => 'admin/settings',
-            'icon' => 'fas fa-fw fa-lock',
-        ],
-        [
-            'text' => 'multilevel',
-            'icon' => 'fas fa-fw fa-share',
-            'submenu' => [
-                [
-                    'text' => 'level_one',
-                    'url' => '#',
-                ],
-                [
-                    'text' => 'level_one',
-                    'url' => '#',
-                    'submenu' => [
-                        [
-                            'text' => 'level_two',
-                            'url' => '#',
-                        ],
-                        [
-                            'text' => 'level_two',
-                            'url' => '#',
-                            'submenu' => [
-                                [
-                                    'text' => 'level_three',
-                                    'url' => '#',
-                                ],
-                                [
-                                    'text' => 'level_three',
-                                    'url' => '#',
-                                ],
+    // =============================================
+    // TUS ELEMENTOS EXISTENTES (SE MANTIENEN EXACTAMENTE IGUAL)
+    // =============================================
+    // Navbar items:
+///////    [
+///////        'type' => 'navbar-search',
+///////        'text' => 'search',
+///////        'topnav_right' => true,
+///////    ],
+///////    [
+///////        'type' => 'fullscreen-widget',
+///////        'topnav_right' => true,
+///////    ],
+
+    // Sidebar items:
+///////    [
+///////        'type' => 'sidebar-menu-search',
+///////        'text' => 'search',
+       
+///////    ],
+
+    
+///////    ['header' => 'account_settings'],
+///////    [
+///////        'text' => 'profile',
+///////        'url' => 'admin/settings',
+///////        'icon' => 'fas fa-fw fa-user',
+       
+///////    ],
+///////    [
+///////        'text' => 'change_password',
+///////        'url' => 'admin/settings',
+///////        'icon' => 'fas fa-fw fa-lock',
+       
+///////    ],
+    [
+        'text' => 'multilevel',
+        'icon' => 'fas fa-fw fa-share',
+        'can' => 'admin',
+        'submenu' => [
+            [
+                'text' => 'level_one',
+                'url' => '#',
+            ],
+            [
+                'text' => 'level_one',
+                'url' => '#',
+                'submenu' => [
+                    [
+                        'text' => 'level_two',
+                        'url' => '#',
+                    ],
+                    [
+                        'text' => 'level_two',
+                        'url' => '#',
+                        'submenu' => [
+                            [
+                                'text' => 'level_three',
+                                'url' => '#',
+                            ],
+                            [
+                                'text' => 'level_three',
+                                'url' => '#',
                             ],
                         ],
                     ],
                 ],
-                [
-                    'text' => 'level_one',
-                    'url' => '#',
-                ],
+            ],
+            [
+                'text' => 'level_one',
+                'url' => '#',
             ],
         ],
-        [
-            'text' => 'Calendario',
-            'url'  => 'admin/calendario',
-            'icon' => 'fas fa-fw fa-calendar-alt',
-        ],
-        ['header' => 'labels'],
-        [
-            'text' => 'important',
-            'icon_color' => 'red',
-            'url' => '#',
-        ],
-        [
-            'text' => 'warning',
-            'icon_color' => 'yellow',
-            'url' => '#',
-        ],
-        [
-            'text' => 'information',
-            'icon_color' => 'cyan',
-            'url' => '#',
-        ],
     ],
+    
+    
+    
+    
+    ['header' => 'RESERVA DE ESPACIOS'],
+    [
+        'text' => 'Calendario',
+        'url'  => 'admin/calendario',
+        'icon' => 'fas fa-fw fa-calendar-alt',
+    ],
+   
+    
+   /////// [
+   ///////     'text' => 'important',
+   ///////     'icon_color' => 'red',
+   ///////     'url' => '#',
+        
+   /////// ],
+   /////// [
+   ///////     'text' => 'warning',
+   ///////     'icon_color' => 'yellow',
+   ///////     'url' => '#',
+       
+   /////// ],
+   /////// [
+   ///////     'text' => 'information',
+   ///////     'icon_color' => 'cyan',
+   ///////     'url' => '#',
+       
+   /////// ],
+],
 
     /*
     |--------------------------------------------------------------------------

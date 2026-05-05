@@ -11,17 +11,39 @@ use Laravel\Jetstream\HasTeams;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-
-
-
-
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, HasProfilePhoto, HasTeams, Notifiable, TwoFactorAuthenticatable, HasRoles;
+    use HasApiTokens; 
+    use HasFactory; 
+    use HasProfilePhoto; 
+    use HasTeams; 
+    use Notifiable;
+    use TwoFactorAuthenticatable; 
+    use HasRoles;
 
-    
+    protected $table = 'users'; // Laravel usará sem_users por el prefix
+    protected $guard_name = 'web';
+    public $timestamps = false; // ✅ DESACTIVA los campos created_at / updated_at
 
-    // Atributos que deben ser ocultos al serializar
+protected $fillable = [
+    'name',
+    'username',
+    'email',
+    'password',
+    'rol',
+    'params',
+    'registerDate',
+    'lastvisitDate',
+    'lastResetTime'  // Añade este campo
+];
+
+protected $attributes = [
+    'params' => '{}',
+    'registerDate' => null,
+    'lastvisitDate' => null,
+    'lastResetTime' => null  // Añade este campo
+];
+
     protected $hidden = [
         'password',
         'remember_token',
@@ -29,23 +51,38 @@ class User extends Authenticatable
         'two_factor_secret',
     ];
 
-    // Atributos adicionales que se agregan a la respuesta del modelo
     protected $appends = [
         'profile_photo_url',
     ];
-
-    // Campos que deben ser convertidos a tipos específicos
-    protected function casts(): array
+protected function casts(): array
+{
+    return [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'registerDate' => 'datetime',
+        'lastvisitDate' => 'datetime',
+        'lastResetTime' => 'datetime'  // Añade este cast
+    ];
+}
+    protected static function boot()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->registerDate = $model->registerDate ?? now();
+            $model->lastvisitDate = $model->lastvisitDate ?? now();  // Nueva línea añadida
+            $model->lastResetTime = $model->lastResetTime ?? now(); 
+        });
     }
 
-
-    protected $table = 'users'; 
-
-
+public function isAdmin()
+{
+    // Verifica ambos sistemas de roles por seguridad
+    return $this->rol === 'admin' || $this->hasRole('admin');
 }
 
+    public function adminlte_desc()
+    {
+        return $this->isAdmin() ? 'Administrador' : 'Usuario';
+    }
+}
